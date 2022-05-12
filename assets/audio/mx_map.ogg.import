@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/mx_map.ogg-8a2d0b9ca81e6ec7e9b1440f78a6df6b.oggstr"
+
+[deps]
+
+source_file="res://assets/audio/mx_map.ogg"
+dest_files=[ "res://.import/mx_map.ogg-8a2d0b9ca81e6ec7e9b1440f78a6df6b.oggstr" ]
+
+[params]
+
+loop=true
+loop_offset=0

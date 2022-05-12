@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/bg_whaca.ogg-46c0e3a7e60cb0e09b63b97ffc9a7a33.oggstr"
+
+[deps]
+
+source_file="res://assets/audio/bg_whaca.ogg"
+dest_files=[ "res://.import/bg_whaca.ogg-46c0e3a7e60cb0e09b63b97ffc9a7a33.oggstr" ]
+
+[params]
+
+loop=true
+loop_offset=0

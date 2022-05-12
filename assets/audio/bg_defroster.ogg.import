@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/bg_defroster.ogg-365b7d301769830734816a9367f5ae12.oggstr"
+
+[deps]
+
+source_file="res://assets/audio/bg_defroster.ogg"
+dest_files=[ "res://.import/bg_defroster.ogg-365b7d301769830734816a9367f5ae12.oggstr" ]
+
+[params]
+
+loop=true
+loop_offset=0

@@ -1,0 +1,25 @@
+{
+  "audios": {
+    "Main": [
+      {
+        "node": "AudioStreamPlayer2D",
+        "papa": "Main",
+        "path": "bg_hidden.ogg"
+      },
+      {
+        "node": "AudioStreamPlayer2D2",
+        "papa": "Main",
+        "path": "mx_map.ogg"
+      }
+    ]
+  },
+  "images": {
+    "Main": [
+      {
+        "node": "Sprite",
+        "papa": "Main",
+        "path": "map_bg.png"
+      }
+    ]
+  }
+}
