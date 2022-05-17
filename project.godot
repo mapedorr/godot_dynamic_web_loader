@@ -16,7 +16,7 @@ config/icon="res://icon.png"
 
 [autoload]
 
-HttpLoader="*res://src/Singletons/HttpLoader.tscn"
+DWL="*res://src/Singletons/DynamicWebLoader.tscn"
 
 [display]
 

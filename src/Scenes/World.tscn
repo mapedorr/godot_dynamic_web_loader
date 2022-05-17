@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://assets/images/map_sky_bright.png" type="Texture" id=1]
+[ext_resource path="res://assets/audios/bg_dump.ogg" type="AudioStream" id=2]
+[ext_resource path="res://src/Scenes/World.gd" type="Script" id=3]
+
+[node name="World" type="Node2D"]
+script = ExtResource( 3 )
+
+[node name="Sprite" type="Sprite" parent="."]
+texture = ExtResource( 1 )
+centered = false
+
+[node name="WorldBgSfx" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 2 )
+autoplay = true

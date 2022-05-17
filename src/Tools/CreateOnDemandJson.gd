@@ -10,8 +10,8 @@ const JSON_PATH := 'res://src/Web/on_demand_assets.json'
 
 var _filesys: EditorFileSystem
 var _assets_paths := { audios = {}, images = {} }
-var _papa: Node
-var _papa_dependencies: PoolStringArray
+var _mama: Node
+var _mama_dependencies: PoolStringArray
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos de Godot ░░░░
@@ -71,110 +71,133 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 		if not _filesys.get_file_type(path) == "PackedScene":
 			continue
 
-		_papa = (ResourceLoader.load(path) as PackedScene).instance()
-#		_papa_dependencies = ResourceLoader.get_dependencies(path)
+		_mama = (ResourceLoader.load(path) as PackedScene).instance()
+#		_mama_dependencies = ResourceLoader.get_dependencies(path)
 
 		# ---- Obtener las imágenes del nodo y sus hijos -----------------------
-		_assets_paths.images[_papa.name] = []
+		_assets_paths.images[_mama.name] = []
 
-		if _papa.has_method('get_on_demand_textures'):
-			var textures: Array = _papa.get_on_demand_textures()
-			_assets_paths.images[_papa.name].append_array(textures)
+		if _mama.has_method('get_on_demand_textures'):
+			var textures: Array = _mama.get_on_demand_textures()
+			_assets_paths.images[_mama.name].append_array(textures)
 		else:
-			_add_image_paths(_papa)
+			_go_through_nodes(_mama)
 
-		if (_assets_paths.images[_papa.name] as Array).empty():
-			_assets_paths.images.erase(_papa.name)
+		if (_assets_paths.images[_mama.name] as Array).empty():
+			_assets_paths.images.erase(_mama.name)
 		
 		# ---- Obtener los audios del nodo y sus hijos -------------------------
-		_assets_paths.audios[_papa.name] = []
+		_assets_paths.audios[_mama.name] = []
 		
-		if _papa.has_method('get_on_demand_audios'):
-			var audios: Dictionary = _papa.get_on_demand_audios()
+		if _mama.has_method('get_on_demand_audios'):
+			var audios: Dictionary = _mama.get_on_demand_audios()
 			_assets_paths.audios = audios
 		else:
-			_add_audio_paths(_papa)
+			_get_node_audio(_mama)
 		
-		if (_assets_paths.audios[_papa.name] as Array).empty():
-			_assets_paths.audios.erase(_papa.name)
+		if (_assets_paths.audios[_mama.name] as Array).empty():
+			_assets_paths.audios.erase(_mama.name)
 
 
-func _add_image_paths(node: Node, tree := '') -> void:
+func _go_through_nodes(node: Node, tree := '') -> void:
+	_save_node_texture(node, '.')
+	
 	for c in node.get_children():
 		var node_path := _get_tree_text(tree, c.name)
-
-		match c.get_class():
-			'TextureRect', 'Sprite':
-				_add_image(node_path, c.texture)
-			'CheckBox':
-				var cb: CheckBox = c
-				_add_image(
-					node_path,
-					cb.get_icon('checked'),
-					'checked'
-				)
-				_add_image(
-					node_path,
-					cb.get_icon('unchecked'),
-					'unchecked'
-				)
-			'Button':
-				pass
-#				var b: Button = c
-#				prints(b.name, b.get_stylebox('normal'))
-#				_add_image(
-#					node_path,
-#					button.normal,
-#					'normal'
-#				)
-			'TextureButton':
-				var tb: TextureButton = c
-				_add_image(
-					node_path,
-					tb.texture_normal,
-					'texture_normal'
-				)
-				_add_image(
-					node_path,
-					tb.texture_pressed,
-					'texture_pressed'
-				)
-			'Label':
-				var l: Label = c
-				if l.get_stylebox('normal').get_class() == 'StyleBoxTexture':
-					_add_image(
-						node_path,
-						(l.get_stylebox('normal') as StyleBoxTexture).texture
-					)
+		_save_node_texture(c, node_path)
 
 		# not c.filename: para ignorar los nodos que sean una instancia de
 		# otra escena.
 		if not c.filename and not c.get_children().empty():
-			_add_image_paths(c, node_path)
+			_go_through_nodes(c, node_path)
 
 
-func _add_image(node_path: String, texture: Texture, theme := '') -> void:
+func _save_node_texture(node: Node, node_path: String) -> void:
+	match node.get_class():
+		'TextureRect', 'Sprite':
+			_add_texture(node_path, node.texture)
+		'CheckBox':
+			var cb: CheckBox = node
+			_add_texture(
+				node_path,
+				cb.get_icon('checked'),
+				'checked'
+			)
+			_add_texture(
+				node_path,
+				cb.get_icon('unchecked'),
+				'unchecked'
+			)
+		'Button':
+			var b: Button = node
+			
+			_add_texture(
+				node_path,
+				b.icon,
+				'icon'
+			)
+			
+			if b.get_stylebox('normal') is StyleBoxTexture:
+				_add_texture(
+					node_path,
+					(b.get_stylebox('normal') as StyleBoxTexture).texture,
+					'stylebox_normal'
+				)
+			
+			if b.get_stylebox('hover') is StyleBoxTexture:
+				_add_texture(
+					node_path,
+					(b.get_stylebox('hover') as StyleBoxTexture).texture,
+					'stylebox_hover'
+				)
+		'TextureButton':
+			var tb: TextureButton = node
+			_add_texture(
+				node_path,
+				tb.texture_normal,
+				'texture_normal'
+			)
+			_add_texture(
+				node_path,
+				tb.texture_pressed,
+				'texture_pressed'
+			)
+		'Label':
+			var l: Label = node
+			if l.get_stylebox('normal').get_class() == 'StyleBoxTexture':
+				_add_texture(
+					node_path,
+					(l.get_stylebox('normal') as StyleBoxTexture).texture
+				)
+
+
+func _add_texture(node_path: String, texture: Texture, prop := '') -> void:
 	if not texture: return
 	
 	var new_entry := {
 		node = node_path,
-		papa = _papa.name,
+		mama = _mama.name,
 		path = get_texture_web_path(texture)
 	}
 	
-	if theme:
-		new_entry['theme'] = theme
+	if prop:
+		new_entry['prop'] = prop
 	
-	_assets_paths.images[_papa.name].append(new_entry)
+	_assets_paths.images[_mama.name].append(new_entry)
 
 
-func _add_audio_paths(node: Node, tree := '') -> void:
+func _get_node_audio(node: Node, tree := '') -> void:
 	for c in node.get_children():
 		var node_path := _get_tree_text(tree, c.name)
 
 		match c.get_class():
+			'AudioStreamPlayer':
+				_add_stream(
+					node_path,
+					(c as AudioStreamPlayer).stream
+				)
 			'AudioStreamPlayer2D':
-				_add_audio(
+				_add_stream(
 					node_path,
 					(c as AudioStreamPlayer2D).stream
 				)
@@ -182,19 +205,19 @@ func _add_audio_paths(node: Node, tree := '') -> void:
 		# not c.filename: para ignorar los nodos que sean una instancia de
 		# otra escena.
 		if not c.filename and not c.get_children().empty():
-			_add_audio_paths(c, node_path)
+			_get_node_audio(c, node_path)
 
 
-func _add_audio(node_path: String, stream: AudioStream) -> void:
+func _add_stream(node_path: String, stream: AudioStream) -> void:
 	if not stream: return
 	
 	var new_entry := {
 		node = node_path,
-		papa = _papa.name,
+		mama = _mama.name,
 		path = get_audio_web_path(stream)
 	}
 	
-	_assets_paths.audios[_papa.name].append(new_entry)
+	_assets_paths.audios[_mama.name].append(new_entry)
 
 
 func _get_tree_text(parent_name: String, node_name: String) -> String:

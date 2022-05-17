@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/bg_supermarket.ogg-51f8cef848c9cebd05f951743239099c.oggstr"
+
+[deps]
+
+source_file="res://assets/audios/bg_supermarket.ogg"
+dest_files=[ "res://.import/bg_supermarket.ogg-51f8cef848c9cebd05f951743239099c.oggstr" ]
+
+[params]
+
+loop=true
+loop_offset=0

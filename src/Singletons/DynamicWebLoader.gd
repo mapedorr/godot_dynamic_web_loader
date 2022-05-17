@@ -14,8 +14,11 @@ var dwl_dic := {}
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos de Godot ░░░░
 func _ready() -> void:
-#	get_tree().connect('node_added', self, 'testo')
+	if OS.has_feature('dwl'):
+		get_tree().connect('node_added', self, 'on_node_added')
 #	get_tree().connect('tree_changed', self, 'testo') # Puede ser la plena
+	
+#	load_json()
 	
 	if OS.has_feature('dwl'):
 		var http_request = HTTPRequest.new()
@@ -34,8 +37,13 @@ func _ready() -> void:
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos públicos ░░░░
-func testo() -> void:
-	prints()
+func on_node_added(node: Node) -> void:
+	prints('>>>', node.name)
+	load_pack(
+		node,
+		dwl_dic.images[node.name] if dwl_dic.images.has(node.name) else [],
+		dwl_dic.audios[node.name] if dwl_dic.audios.has(node.name) else []
+	)
 
 
 func load_pack(container: Node, images := [], audios := []) -> Node:
@@ -54,7 +62,11 @@ func load_pack(container: Node, images := [], audios := []) -> Node:
 		assets.append_array(audios)
 #		for s in audios:
 #			assets.append(Globals.on_demand_dic.audios[s])
-
+	
+	if assets.empty():
+		prints('No hay nada para cargar en el nodo', container.name)
+		return null
+	
 	for asset in assets:
 		var ext: String = asset.path.get_extension()
 		
@@ -108,12 +120,12 @@ func _http_request_completed(
 	# Parámetros adicionales
 	ext: String,
 	data: Dictionary,
-	papa: Node
+	mama: Node
 ):
-#	var papa: Node = requesters_container.get_parent()
-	var papa_counts: Dictionary = _load_counts[papa.get_instance_id()]
+#	var mama: Node = requesters_container.get_parent()
+	var mama_counts: Dictionary = _load_counts[mama.get_instance_id()]
 	
-	papa_counts.loaded_files += 1
+	mama_counts.loaded_files += 1
 	
 	if ext == 'png' or ext == 'jpg':
 		# Se cargó una imagen del servidor
@@ -131,18 +143,18 @@ func _http_request_completed(
 		var texture = ImageTexture.new()
 		texture.create_from_image(image)
 		
-		if papa.has_method('set_on_demand_texture'):
-			papa.set_on_demand_texture(texture, data.prop)
+		if mama.has_method('set_on_demand_texture'):
+			mama.set_on_demand_texture(texture, data.prop)
 		else:
 			var response := {
 				type = 'image',
 				res = texture,
 				node = data.node,
-				papa = papa
+				mama = mama
 			}
 			
-			if data.has('theme'):
-				response.theme = data.theme
+			if data.has('prop'):
+				response.prop = data.prop
 
 			_asset_loaded(response)
 
@@ -162,37 +174,68 @@ func _http_request_completed(
 			type = 'audio',
 			res = audio_stream,
 			node = data.node,
-			papa = papa,
+			mama = mama,
 #			resource_name = data.name
 		})
 	
-	if papa_counts.loaded_files == papa_counts.total_files:
-		emit_signal('load_done', papa.get_instance_id())
+	if mama_counts.loaded_files == mama_counts.total_files:
+		emit_signal('load_done', mama.get_instance_id())
 		# TODO: Eliminar el HttpRequest creado
 #		requesters_container.queue_free()
 
 
 func _asset_loaded(data: Dictionary):
 	if data.type == 'image':
-		var node := (data.papa as Node).get_node(data.node)
+		var node := (data.mama as Node).get_node(data.node)
 		match node.get_class():
 			'TextureRect', 'Sprite':
 				node.texture = data.res
 			'CheckBox':
-				(node as CheckBox).add_icon_override(data.theme, data.res)
+				(node as CheckBox).add_icon_override(data.prop, data.res)
 			'TextureButton':
-				match data.theme:
+				var tb: TextureButton = node
+				
+				match data.prop:
 					'texture_normal':
-						(node as TextureButton).texture_normal = data.res
+						tb.texture_normal = data.res
 					'texture_pressed':
-						(node as TextureButton).texture_pressed = data.res
+						tb.texture_pressed = data.res
+			'Button':
+				var b: Button = node
+				
+				match data.prop:
+					'icon':
+						b.icon = data.res
+					'stylebox_normal':
+						(b.get_stylebox('normal') as StyleBoxTexture).texture =\
+						data.res
+					'stylebox_hover':
+						(b.get_stylebox('hover') as StyleBoxTexture).texture =\
+						data.res
 			'Label':
-				(node.get_stylebox('normal') as StyleBoxTexture).texture = data.res
+				(node.get_stylebox('normal') as StyleBoxTexture).texture =\
+				data.res
 	else:
-		var node := (data.papa as Node).get_node(data.node)
+		var node := (data.mama as Node).get_node(data.node)
 		match node.get_class():
+			'AudioStreamPlayer':
+				node.stream = data.res
+				(node as AudioStreamPlayer).play()
 			'AudioStreamPlayer2D':
 				node.stream = data.res
-				prints('>>>>', node.name)
 				(node as AudioStreamPlayer2D).play()
 #		A.set_on_demand_audio(data.res, data.resource_name)
+
+
+func load_json():
+	var file = File.new()
+	
+	if not file.file_exists('res://src/Web/on_demand_assets.json'):
+		prints('NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO')
+		return
+	
+	file.open('res://src/Web/on_demand_assets.json', File.READ)
+	var data = parse_json(file.get_as_text())
+	var file_data = data
+	
+	prints(file_data)
