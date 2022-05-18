@@ -1,50 +1,35 @@
 tool
-extends EditorScript
-# Este script recorre la carpeta seleccionada en FileSystem y sus subcarpetas
-# en busca de .TSCN y .TRES para crear un diccionario de imágenes y sonidos
-# asociados a nodos para crear un diccionario que permita obtenerlos cuando el
-# juego se corre en Web cargando recursos por demanda.
+extends EditorPlugin
+# ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
+const MAIN_DOCK := preload('res://addons/dwl/Editor/MainDock/DWLDock.tscn')
 const SRC_PATH := 'res://src/'
 const JSON_PATH := 'res://src/Web/on_demand_assets.json'
 
-var _filesys: EditorFileSystem
+var main_dock: Panel
+
+var _editor_interface := get_editor_interface()
+var _editor_file_system := _editor_interface.get_resource_filesystem()
+var _directory := Directory.new()
 var _assets_paths := { audios = {}, images = {} }
-var _mama: Node
-var _mama_dependencies: PoolStringArray
+var _mama: Node = null
+var _report := {}
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos de Godot ░░░░
-func _run():
-	var interface: EditorInterface = get_editor_interface()
-	_filesys = interface.get_resource_filesystem()
-	var dir: EditorFileSystemDirectory = _filesys.get_filesystem_path(SRC_PATH)
-#	var dir: EditorFileSystemDirectory = _filesys.get_filesystem_path(interface.get_selected_path())
+func _enter_tree() -> void:
+	prints('Simona la cacalisa')
 	
-	# Se recorren todas las carpetas para buscar archivos .TSCN y así analizar
-	# su estructura en busca de texturas y archivos de sonido.
-	_read_path(dir)
+	main_dock = MAIN_DOCK.instance()
+	main_dock.focus_mode = Control.FOCUS_ALL
 	
-	# Escribir el resultado en un JSON que se cargará en la versión Web del juego.
-	var err: int = _save_json(JSON_PATH, _assets_paths)
+	main_dock.connect('json_requested', self, '_create_json')
 	
-	assert(err == OK, '[DWL] Error creating JSON %d' % err)
-	
-	var time := OS.get_datetime()
-	
-	prints(
-		'░░░░ H E C H O ░░░░',
-		'%s/%s/%d %s:%s:%s' % [
-			str(time.day).pad_zeros(2),
-			str(time.month).pad_zeros(2),
-			time.year,
-			
-			str(time.hour).pad_zeros(2),
-			str(time.minute).pad_zeros(2),
-			str(time.second).pad_zeros(2)
-		],
-		'░░░░ O H C E H ░░░░'
-	)
+	add_control_to_dock(DOCK_SLOT_RIGHT_BR, main_dock)
+
+
+func _exit_tree() -> void:
+	pass
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos públicos ░░░░
@@ -57,6 +42,22 @@ func get_audio_web_path(t: AudioStream) -> String:
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos privados ░░░░
+func _create_json() -> void:
+	var dir: EditorFileSystemDirectory =\
+	_editor_file_system.get_filesystem_path(SRC_PATH)
+	
+	# Se recorren todas las carpetas para buscar archivos .TSCN y así analizar
+	# su estructura en busca de texturas y archivos de sonido.
+	_read_path(dir)
+	
+	# Escribir el resultado en un JSON que se cargará en la versión Web del juego.
+	var err: int = _save_json(JSON_PATH, _assets_paths)
+	
+	assert(err == OK, '[DWL] Error creating JSON %d' % err)
+	
+	main_dock.update_result(OS.get_datetime(), _report)
+
+
 func _read_path(dir: EditorFileSystemDirectory) -> void:
 	if dir.get_subdir_count():
 		for d in dir.get_subdir_count():
@@ -73,11 +74,12 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 	for f in dir.get_file_count():
 		var path = dir.get_file_path(f)
 
-		if not _filesys.get_file_type(path) == "PackedScene":
+		if not _editor_file_system.get_file_type(path) == "PackedScene":
 			continue
 
 		_mama = (ResourceLoader.load(path) as PackedScene).instance()
-#		_mama_dependencies = ResourceLoader.get_dependencies(path)
+		
+		_report[_mama.name] = {images = 0, audios = 0}
 
 		# ---- Obtener las imágenes del nodo y sus hijos -----------------------
 		_assets_paths.images[_mama.name] = []
@@ -90,6 +92,8 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 
 		if (_assets_paths.images[_mama.name] as Array).empty():
 			_assets_paths.images.erase(_mama.name)
+		else:
+			_report[_mama.name].images = _assets_paths.images[_mama.name].size()
 		
 		# ---- Obtener los audios del nodo y sus hijos -------------------------
 		_assets_paths.audios[_mama.name] = []
@@ -102,6 +106,11 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 		
 		if (_assets_paths.audios[_mama.name] as Array).empty():
 			_assets_paths.audios.erase(_mama.name)
+		else:
+			_report[_mama.name].audios = _assets_paths.audios[_mama.name].size()
+		
+		if not _report[_mama.name].images and not _report[_mama.name].audios:
+			_report.erase(_mama.name)
 
 
 func _go_through_nodes(node: Node, tree := '') -> void:
