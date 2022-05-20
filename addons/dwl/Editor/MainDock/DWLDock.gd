@@ -28,7 +28,7 @@ func update_result(time: Dictionary, report: Dictionary) -> void:
 	_generation_result.text += '\n\n'
 	
 	for d in report:
-		_generation_result.text += '%s.tscn [images (%d), audios (%d)]' % [
+		_generation_result.text += '%s [images (%d), audios (%d)]' % [
 			d, report[d].images, report[d].audios
 		]
 		_generation_result.text += '\n'

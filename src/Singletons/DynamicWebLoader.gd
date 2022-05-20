@@ -3,13 +3,19 @@ extends Node
 # warning-ignore-all:return_value_discarded
 
 signal asset_ready(dic)
-signal load_done(container_id)
+signal load_started(total_files)
+signal load_progress(loaded_files, total_files)
+signal load_done(node_id)
 
 const ASSETS_PATH := 'http://127.0.0.1:8080/assets/%s/%s'
 
 var _load_counts := {}
+var _loaded_files := 0
+var _total_files := 0
 
 var dwl_dic := {}
+
+onready var _progress_bar: ProgressBar = find_node('ProgressBar')
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos de Godot ░░░░
@@ -18,81 +24,83 @@ func _ready() -> void:
 		get_tree().connect('node_added', self, 'on_node_added')
 #	get_tree().connect('tree_changed', self, 'testo') # Puede ser la plena
 	
-#	load_json()
-	
 	if OS.has_feature('dwl'):
+		# load_json() # Para cargar el que esté en el .pck
+		
 		var http_request = HTTPRequest.new()
-		add_child(http_request)
+		$HTTPRequestContainers.add_child(http_request)
 		
 		http_request.connect(
 			'request_completed',
 			self,
-			'_json_request_completed'
+			'_json_request_completed',
+			[http_request]
 		)
 		
 		var error = http_request.request('http://127.0.0.1:8080/on_demand_assets.json')
 		if error != OK:
 			push_error("An error occurred in the HTTP request.")
+	else:
+		$CanvasLayer/Control.hide()
 
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos públicos ░░░░
 func on_node_added(node: Node) -> void:
-	prints('>>>', node.name)
 	load_pack(
 		node,
-		dwl_dic.images[node.name] if dwl_dic.images.has(node.name) else [],
-		dwl_dic.audios[node.name] if dwl_dic.audios.has(node.name) else []
+		dwl_dic.images[node.filename] if dwl_dic.images.has(node.filename) else [],
+		dwl_dic.audios[node.filename] if dwl_dic.audios.has(node.filename) else []
 	)
 
 
-func load_pack(container: Node, images := [], audios := []) -> Node:
-	_load_counts[container.get_instance_id()] = {
+func load_pack(node: Node, images := [], audios := []) -> Node:
+	_load_counts[node.get_instance_id()] = {
 		total_files = 0,
 		loaded_files = 0
 	}
-
-#	var requesters_container := Node.new()
-#	container.add_child(requesters_container)
-	
 	var assets := []
 	
-	if not images.empty(): assets.append_array(images)
+	if not images.empty():
+		assets.append_array(images)
 	if not audios.empty():
 		assets.append_array(audios)
-#		for s in audios:
-#			assets.append(Globals.on_demand_dic.audios[s])
 	
 	if assets.empty():
-		prints('No hay nada para cargar en el nodo', container.name)
 		return null
 	
 	for asset in assets:
 		var ext: String = asset.path.get_extension()
 		
 		var http_request = HTTPRequest.new()
-		add_child(http_request)
-#		requesters_container.add_child(http_request)
+		$HTTPRequestContainers.add_child(http_request)
 		http_request.connect(
 			'request_completed',
 			self,
 			'_http_request_completed',
-			[ext, asset, container]
+			[ext, asset, node, http_request]
 		)
-
+		
 		var error := OK
-
+		
 		if ext == 'png' or ext == 'jpg':
 			error = http_request.request(ASSETS_PATH % ['images', asset.path])
 		elif ext == 'ogg' or ext == 'mp3':
 			error = http_request.request(ASSETS_PATH % ['audios', asset.path])
-
+		
 		if error != OK:
 			push_error('An error occurred in the HTTP request.')
-
-		_load_counts[container.get_instance_id()].total_files += 1
-
-	return null
+		
+		_load_counts[node.get_instance_id()].total_files += 1
+		_total_files += 1
+	
+	_progress_bar.value = 0
+	$CanvasLayer/Control.show()
+	
+	prints('Archivos a cargar', _total_files)
+	emit_signal('load_started', _total_files)
+	
+	return node
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos privados ░░░░
@@ -100,15 +108,20 @@ func _json_request_completed(\
 _result: int,
 _response_code: int,
 _headers: PoolStringArray,
-body: PoolByteArray) -> void:
+body: PoolByteArray,
+# extra params
+http_request: HTTPRequest
+) -> void:
+	http_request.queue_free()
+	
 	var response = parse_json(body.get_string_from_utf8())
 	dwl_dic = response
 	
-	if dwl_dic.images.has(get_tree().current_scene.name):
+	if dwl_dic.images.has(get_tree().current_scene.filename):
 		load_pack(
 			get_tree().current_scene,
-			dwl_dic.images[get_tree().current_scene.name],
-			dwl_dic.audios[get_tree().current_scene.name]
+			dwl_dic.images[get_tree().current_scene.filename],
+			dwl_dic.audios[get_tree().current_scene.filename]
 		)
 
 
@@ -120,12 +133,15 @@ func _http_request_completed(
 	# Parámetros adicionales
 	ext: String,
 	data: Dictionary,
-	mama: Node
+	mama: Node,
+	http_request: HTTPRequest
 ):
-#	var mama: Node = requesters_container.get_parent()
 	var mama_counts: Dictionary = _load_counts[mama.get_instance_id()]
 	
 	mama_counts.loaded_files += 1
+	_loaded_files += 1
+	
+	prints('Archivos cargados:', _loaded_files)
 	
 	if ext == 'png' or ext == 'jpg':
 		# Se cargó una imagen del servidor
@@ -155,21 +171,21 @@ func _http_request_completed(
 			
 			if data.has('prop'):
 				response.prop = data.prop
-
+			
 			_asset_loaded(response)
-
+		
 #		emit_signal('asset_ready', response)
 	else:
 		# Se cargó un archivo de audio del servidor
 		var audio_stream: AudioStream
-
+		
 		if ext == 'mp3':
 			audio_stream = AudioStreamMP3.new()
 		else:
 			audio_stream = AudioStreamOGGVorbis.new()
-
+		
 		audio_stream.data = body
-
+		
 		_asset_loaded({
 			type = 'audio',
 			res = audio_stream,
@@ -178,10 +194,22 @@ func _http_request_completed(
 #			resource_name = data.name
 		})
 	
+	prints('Archivo cargado:', data.path.get_file())
+	http_request.queue_free()
+	
+	_progress_bar.value = (_loaded_files * 100) / _total_files
+	
+	emit_signal('load_progress', _loaded_files, _total_files)
+	
 	if mama_counts.loaded_files == mama_counts.total_files:
+		yield(get_tree(), 'idle_frame')
+		
+		if $HTTPRequestContainers.get_child_count() == 0:
+			_total_files = 0
+			_loaded_files = 0
+			$CanvasLayer/Control.hide()
+		
 		emit_signal('load_done', mama.get_instance_id())
-		# TODO: Eliminar el HttpRequest creado
-#		requesters_container.queue_free()
 
 
 func _asset_loaded(data: Dictionary):

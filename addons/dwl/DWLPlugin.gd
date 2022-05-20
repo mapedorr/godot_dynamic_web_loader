@@ -38,7 +38,11 @@ func get_texture_web_path(t: Texture) -> String:
 
 
 func get_audio_web_path(t: AudioStream) -> String:
-	return t.resource_path.trim_prefix('res://assets/audio/')
+	return t.resource_path.trim_prefix('res://assets/audios/')
+
+
+func get_key_name(path: String) -> String:
+	return path.trim_prefix(SRC_PATH)
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos privados ░░░░
@@ -76,27 +80,28 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 
 		if not _editor_file_system.get_file_type(path) == "PackedScene":
 			continue
-
+		
+		var key := get_key_name(path)
 		_mama = (ResourceLoader.load(path) as PackedScene).instance()
 		
-		_report[_mama.name] = {images = 0, audios = 0}
+		_report[key] = {images = 0, audios = 0}
 
 		# ---- Obtener las imágenes del nodo y sus hijos -----------------------
-		_assets_paths.images[_mama.name] = []
+		_assets_paths.images[key] = []
 
 		if _mama.has_method('get_on_demand_textures'):
 			var textures: Array = _mama.get_on_demand_textures()
-			_assets_paths.images[_mama.name].append_array(textures)
+			_assets_paths.images[key].append_array(textures)
 		else:
 			_go_through_nodes(_mama)
 
-		if (_assets_paths.images[_mama.name] as Array).empty():
-			_assets_paths.images.erase(_mama.name)
+		if (_assets_paths.images[key] as Array).empty():
+			_assets_paths.images.erase(key)
 		else:
-			_report[_mama.name].images = _assets_paths.images[_mama.name].size()
+			_report[key].images = _assets_paths.images[key].size()
 		
 		# ---- Obtener los audios del nodo y sus hijos -------------------------
-		_assets_paths.audios[_mama.name] = []
+		_assets_paths.audios[key] = []
 		
 		if _mama.has_method('get_on_demand_audios'):
 			var audios: Dictionary = _mama.get_on_demand_audios()
@@ -104,19 +109,22 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 		else:
 			_get_node_audio(_mama)
 		
-		if (_assets_paths.audios[_mama.name] as Array).empty():
-			_assets_paths.audios.erase(_mama.name)
+		if (_assets_paths.audios[key] as Array).empty():
+			_assets_paths.audios.erase(key)
 		else:
-			_report[_mama.name].audios = _assets_paths.audios[_mama.name].size()
+			_report[key].audios = _assets_paths.audios[key].size()
 		
-		if not _report[_mama.name].images and not _report[_mama.name].audios:
-			_report.erase(_mama.name)
+		if not _report[key].images and not _report[key].audios:
+			_report.erase(key)
 
 
 func _go_through_nodes(node: Node, tree := '') -> void:
 	_save_node_texture(node, '.')
 	
 	for c in node.get_children():
+		if c.filename:
+			continue
+		
 		var node_path := _get_tree_text(tree, c.name)
 		_save_node_texture(c, node_path)
 
@@ -197,7 +205,7 @@ func _add_texture(node_path: String, texture: Texture, prop := '') -> void:
 	if prop:
 		new_entry['prop'] = prop
 	
-	_assets_paths.images[_mama.name].append(new_entry)
+	_assets_paths.images[get_key_name(_mama.filename)].append(new_entry)
 
 
 func _get_node_audio(node: Node, tree := '') -> void:
@@ -231,7 +239,7 @@ func _add_stream(node_path: String, stream: AudioStream) -> void:
 		path = get_audio_web_path(stream)
 	}
 	
-	_assets_paths.audios[_mama.name].append(new_entry)
+	_assets_paths.audios[get_key_name(_mama.filename)].append(new_entry)
 
 
 func _get_tree_text(parent_name: String, node_name: String) -> String:
