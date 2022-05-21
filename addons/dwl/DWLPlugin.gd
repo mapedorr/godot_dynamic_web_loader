@@ -18,8 +18,6 @@ var _report := {}
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos de Godot ░░░░
 func _enter_tree() -> void:
-	prints('Simona la cacalisa')
-	
 	main_dock = MAIN_DOCK.instance()
 	main_dock.focus_mode = Control.FOCUS_ALL
 	
@@ -81,7 +79,8 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 		if not _editor_file_system.get_file_type(path) == "PackedScene":
 			continue
 		
-		var key := get_key_name(path)
+		var key: String = path
+#		var key := get_key_name(path)
 		_mama = (ResourceLoader.load(path) as PackedScene).instance()
 		
 		_report[key] = {images = 0, audios = 0}
@@ -89,11 +88,19 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 		# ---- Obtener las imágenes del nodo y sus hijos -----------------------
 		_assets_paths.images[key] = []
 
-		if _mama.has_method('get_on_demand_textures'):
-			var textures: Array = _mama.get_on_demand_textures()
+		if _mama.has_method('get_prop_textures'):
+			var props: Array = _mama.get_prop_textures()
+			var textures := []
+			
+			for p in props:
+				textures.append({
+					prop = p.prop,
+					path = get_texture_web_path(p.texture)
+				})
+			
 			_assets_paths.images[key].append_array(textures)
-		else:
-			_go_through_nodes(_mama)
+		
+		_go_through_nodes(_mama)
 
 		if (_assets_paths.images[key] as Array).empty():
 			_assets_paths.images.erase(key)
@@ -193,8 +200,11 @@ func _save_node_texture(node: Node, node_path: String) -> void:
 				)
 
 
-func _add_texture(node_path: String, texture: Texture, prop := '') -> void:
-	if not texture: return
+func _add_texture(node_path: String, texture: Texture, style := '') -> void:
+	if not texture\
+	or not is_instance_valid(texture)\
+	or not texture.resource_path:
+		return
 	
 	var new_entry := {
 		node = node_path,
@@ -202,10 +212,11 @@ func _add_texture(node_path: String, texture: Texture, prop := '') -> void:
 		path = get_texture_web_path(texture)
 	}
 	
-	if prop:
-		new_entry['prop'] = prop
+	if style:
+		new_entry['style'] = style
 	
-	_assets_paths.images[get_key_name(_mama.filename)].append(new_entry)
+	_assets_paths.images[_mama.filename].append(new_entry)
+#	_assets_paths.images[get_key_name(_mama.filename)].append(new_entry)
 
 
 func _get_node_audio(node: Node, tree := '') -> void:
@@ -239,7 +250,8 @@ func _add_stream(node_path: String, stream: AudioStream) -> void:
 		path = get_audio_web_path(stream)
 	}
 	
-	_assets_paths.audios[get_key_name(_mama.filename)].append(new_entry)
+	_assets_paths.audios[_mama.filename].append(new_entry)
+#	_assets_paths.audios[get_key_name(_mama.filename)].append(new_entry)
 
 
 func _get_tree_text(parent_name: String, node_name: String) -> String:

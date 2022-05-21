@@ -1,12 +1,26 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=14 format=2]
 
 [ext_resource path="res://assets/images/map_sky_dark.png" type="Texture" id=1]
 [ext_resource path="res://assets/audios/bg_dump.ogg" type="AudioStream" id=2]
 [ext_resource path="res://src/Scenes/World.gd" type="Script" id=3]
 [ext_resource path="res://src/Characters/Player.tscn" type="PackedScene" id=4]
+[ext_resource path="res://assets/images/map.png" type="Texture" id=5]
+[ext_resource path="res://assets/fonts/OpenSans-Medium.ttf" type="DynamicFontData" id=6]
+[ext_resource path="res://assets/images/map_tentacle_02.png" type="Texture" id=7]
+[ext_resource path="res://assets/images/map_tentacle_01.png" type="Texture" id=8]
+[ext_resource path="res://assets/images/map_tentacle_04.png" type="Texture" id=9]
+[ext_resource path="res://assets/images/map_tentacle_03.png" type="Texture" id=10]
+[ext_resource path="res://assets/images/player_interface/map_hud_bg.png" type="Texture" id=11]
+[ext_resource path="res://assets/images/player_interface/main_menu_btn_play.png" type="Texture" id=12]
+
+[sub_resource type="DynamicFont" id=1]
+size = 64
+font_data = ExtResource( 6 )
 
 [node name="World" type="Node2D"]
 script = ExtResource( 3 )
+txt = ExtResource( 5 )
+texturitas = [ ExtResource( 8 ), ExtResource( 7 ), ExtResource( 10 ), ExtResource( 9 ), ExtResource( 11 ), ExtResource( 12 ) ]
 
 [node name="Sprite" type="Sprite" parent="."]
 texture = ExtResource( 1 )
@@ -18,3 +32,11 @@ autoplay = true
 
 [node name="Player" parent="." instance=ExtResource( 4 )]
 position = Vector2( 935, 854 )
+
+[node name="Button" type="Button" parent="."]
+margin_left = 120.0
+margin_top = 833.0
+margin_right = 521.0
+margin_bottom = 927.0
+custom_fonts/font = SubResource( 1 )
+text = "Cargar cosos"

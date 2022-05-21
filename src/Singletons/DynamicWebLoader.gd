@@ -141,8 +141,6 @@ func _http_request_completed(
 	mama_counts.loaded_files += 1
 	_loaded_files += 1
 	
-	prints('Archivos cargados:', _loaded_files)
-	
 	if ext == 'png' or ext == 'jpg':
 		# Se cargó una imagen del servidor
 		var image: Image = Image.new()
@@ -159,8 +157,9 @@ func _http_request_completed(
 		var texture = ImageTexture.new()
 		texture.create_from_image(image)
 		
-		if mama.has_method('set_on_demand_texture'):
-			mama.set_on_demand_texture(texture, data.prop)
+		if data.has('prop'):
+			if mama.has_method('set_prop_texture'):
+				mama.set_prop_texture(data.prop, texture)
 		else:
 			var response := {
 				type = 'image',
@@ -169,8 +168,8 @@ func _http_request_completed(
 				mama = mama
 			}
 			
-			if data.has('prop'):
-				response.prop = data.prop
+			if data.has('style'):
+				response.style = data.style
 			
 			_asset_loaded(response)
 		
@@ -219,11 +218,11 @@ func _asset_loaded(data: Dictionary):
 			'TextureRect', 'Sprite':
 				node.texture = data.res
 			'CheckBox':
-				(node as CheckBox).add_icon_override(data.prop, data.res)
+				(node as CheckBox).add_icon_override(data.style, data.res)
 			'TextureButton':
 				var tb: TextureButton = node
 				
-				match data.prop:
+				match data.style:
 					'texture_normal':
 						tb.texture_normal = data.res
 					'texture_pressed':
@@ -231,7 +230,7 @@ func _asset_loaded(data: Dictionary):
 			'Button':
 				var b: Button = node
 				
-				match data.prop:
+				match data.style:
 					'icon':
 						b.icon = data.res
 					'stylebox_normal':
