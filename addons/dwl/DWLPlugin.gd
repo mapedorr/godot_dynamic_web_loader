@@ -3,8 +3,6 @@ extends EditorPlugin
 # ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 const MAIN_DOCK := preload('res://addons/dwl/Editor/MainDock/DWLDock.tscn')
-const SRC_PATH := 'res://src/'
-const JSON_PATH := 'res://src/Web/on_demand_assets.json'
 
 var main_dock: Panel
 
@@ -17,9 +15,17 @@ var _report := {}
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos de Godot ░░░░
+func _init() -> void:
+	if Engine.editor_hint:
+		DWLResources.init_files()
+	
+	add_autoload_singleton('DWL', DWLResources.DWL_SINGLETON)
+
+
 func _enter_tree() -> void:
 	main_dock = MAIN_DOCK.instance()
 	main_dock.focus_mode = Control.FOCUS_ALL
+	main_dock.ei = _editor_interface
 	
 	main_dock.connect('json_requested', self, '_create_json')
 	
@@ -28,6 +34,10 @@ func _enter_tree() -> void:
 
 func _exit_tree() -> void:
 	pass
+
+
+func disable_plugin() -> void:
+	remove_autoload_singleton('DWL')
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos públicos ░░░░
@@ -40,20 +50,20 @@ func get_audio_web_path(t: AudioStream) -> String:
 
 
 func get_key_name(path: String) -> String:
-	return path.trim_prefix(SRC_PATH)
+	return path.trim_prefix(DWLResources.get_scan_path())
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos privados ░░░░
 func _create_json() -> void:
 	var dir: EditorFileSystemDirectory =\
-	_editor_file_system.get_filesystem_path(SRC_PATH)
+	_editor_file_system.get_filesystem_path(DWLResources.get_scan_path())
 	
 	# Se recorren todas las carpetas para buscar archivos .TSCN y así analizar
 	# su estructura en busca de texturas y archivos de sonido.
 	_read_path(dir)
 	
 	# Escribir el resultado en un JSON que se cargará en la versión Web del juego.
-	var err: int = _save_json(JSON_PATH, _assets_paths)
+	var err: int = _save_json(DWLResources.get_json_path(), _assets_paths)
 	
 	assert(err == OK, '[DWL] Error creating JSON %d' % err)
 	
@@ -76,7 +86,7 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 	for f in dir.get_file_count():
 		var path = dir.get_file_path(f)
 
-		if not _editor_file_system.get_file_type(path) == "PackedScene":
+		if not _editor_file_system.get_file_type(path) == 'PackedScene':
 			continue
 		
 		var key: String = path
@@ -263,8 +273,10 @@ func _get_tree_text(parent_name: String, node_name: String) -> String:
 
 func _save_json(path: String, data: Dictionary):
 	var directory := Directory.new()
-	if not directory.dir_exists(JSON_PATH.get_base_dir()):
-		var err: int = directory.make_dir_recursive(JSON_PATH.get_base_dir())
+	var json_dir := path.get_base_dir()
+	
+	if not directory.dir_exists(json_dir):
+		var err: int = directory.make_dir_recursive(json_dir)
 		assert(err == OK, "[GDWL] Can't create directory")
 	
 	var file = File.new()
