@@ -24,9 +24,10 @@ func _load_world_scene() -> void:
 
 func _load_world_assets() -> void:
 	_btn_load_assets.disabled = true
-	DWL.load_assets(world_scene.resource_path)
+	DWL.preload_assets(world_scene.resource_path)
 	DWL.connect('load_done', self, '_goto_world')
 
 
 func _goto_world(_scene_path: String) -> void:
 	prints('Estamos listos para ir al mundo real!!!')
+	DWL.disconnect('load_done', self, '_goto_world')

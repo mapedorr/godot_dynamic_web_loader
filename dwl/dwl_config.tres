@@ -7,5 +7,5 @@ script = ExtResource( 1 )
 json_name = "dwl"
 json_folder = "res://dwl"
 scan_folder = "res://src"
-assets_url = "http://127.0.0.1:8080/assets"
-json_url = "http://127.0.0.1:8080"
+assets_url = "http://127.0.0.1:3000/assets"
+json_url = "http://127.0.0.1:3000"

@@ -40,3 +40,7 @@ margin_right = 521.0
 margin_bottom = 927.0
 custom_fonts/font = SubResource( 1 )
 text = "Cargar cosos"
+
+[node name="Tree" type="Tree" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
