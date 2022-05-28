@@ -27,20 +27,28 @@ margin_bottom = 20.0
 alignment = 1
 
 [node name="BtnGenerateJSON" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
-margin_left = 856.0
-margin_right = 962.0
+margin_left = 782.0
+margin_right = 880.0
 margin_bottom = 20.0
 size_flags_horizontal = 4
 size_flags_vertical = 0
-text = "Generate JSON"
+text = "Generar JSON"
 
 [node name="BtnOpenConfig" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
-margin_left = 966.0
-margin_right = 1055.0
+margin_left = 884.0
+margin_right = 1016.0
 margin_bottom = 20.0
 size_flags_horizontal = 4
 size_flags_vertical = 0
-text = "Open config"
+text = "Abrir configuración"
+
+[node name="BtnCopyFiles" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+margin_left = 1020.0
+margin_right = 1129.0
+margin_bottom = 20.0
+size_flags_horizontal = 4
+size_flags_vertical = 0
+text = "Copiar archivos"
 
 [node name="GenerationResult" type="Label" parent="MarginContainer/VBoxContainer"]
 margin_top = 24.0

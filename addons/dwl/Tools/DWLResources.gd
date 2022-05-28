@@ -3,6 +3,7 @@ class_name DWLResources
 
 const RESOURCES_DIR: String = 'res://dwl'
 const DWL_SINGLETON := 'res://addons/dwl/Singletons/DynamicWebLoader.tscn'
+const WORKING_DIR := 'user://dwl/assets/'
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos públicos ░░░░
@@ -35,7 +36,7 @@ static func get_json_url() -> String:
 
 
 static func get_assets_url() -> String:
-	return get_settings().assets_url + '/%s/%s'
+	return get_settings().assets_url + '/%s'
 
 
 static func get_customs() -> Node:

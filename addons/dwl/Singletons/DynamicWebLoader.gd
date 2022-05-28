@@ -193,11 +193,11 @@ func _request_asset(ext: String, data: Dictionary, target) -> void:
 	
 	if ext == 'png' or ext == 'jpg':
 		error = http_request.request(
-			DWLResources.get_assets_url() % ['images', data.path]
+			DWLResources.get_assets_url() % data.path
 		)
 	elif ext == 'ogg' or ext == 'mp3':
 		error = http_request.request(
-			DWLResources.get_assets_url() % ['audios', data.path]
+			DWLResources.get_assets_url() % data.path
 		)
 	
 	if error != OK:

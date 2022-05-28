@@ -29,6 +29,7 @@ func _enter_tree() -> void:
 	main_dock = MAIN_DOCK.instance()
 	main_dock.focus_mode = Control.FOCUS_ALL
 	main_dock.ei = _editor_interface
+	main_dock.efs = _editor_file_system
 	
 	main_dock.connect('json_requested', self, '_create_json')
 	
@@ -45,11 +46,11 @@ func disable_plugin() -> void:
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos públicos ░░░░
 func get_texture_web_path(t: Texture) -> String:
-	return t.resource_path.trim_prefix('res://assets/images/')
+	return t.resource_path.trim_prefix('res://')
 
 
 func get_audio_web_path(t: AudioStream) -> String:
-	return t.resource_path.trim_prefix('res://assets/audios/')
+	return t.resource_path.trim_prefix('res://')
 
 
 func get_key_name(path: String) -> String:

@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=2]
 
-[ext_resource path="res://assets/images/characters/char_punkafro_full.png" type="Texture" id=1]
+[ext_resource path="res://src/Characters/char_punkafro_full.png" type="Texture" id=1]
 [ext_resource path="res://assets/images/map_sky_bright.png" type="Texture" id=2]
 [ext_resource path="res://src/Characters/Player.gd" type="Script" id=3]
 
