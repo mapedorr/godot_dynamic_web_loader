@@ -3,6 +3,7 @@ extends EditorPlugin
 # ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 const MAIN_DOCK := preload('res://addons/dwl/Editor/MainDock/DWLDock.tscn')
+const SetGet := preload('res://addons/dwl/Tools/DWLSetGet.gd')
 
 var main_dock: Panel
 
@@ -12,6 +13,8 @@ var _directory := Directory.new()
 var _assets_paths := { audios = {}, images = {} }
 var _mama: Node = null
 var _report := {}
+
+onready var _customs := DWLResources.get_customs()
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos de Godot ░░░░
@@ -110,8 +113,8 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 			
 			_assets_paths.images[key].append_array(textures)
 		
-		_go_through_nodes(_mama)
-
+		_get_node_images(_mama)
+		
 		if (_assets_paths.images[key] as Array).empty():
 			_assets_paths.images.erase(key)
 		else:
@@ -123,8 +126,8 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 		if _mama.has_method('get_on_demand_audios'):
 			var audios: Dictionary = _mama.get_on_demand_audios()
 			_assets_paths.audios = audios
-		else:
-			_get_node_audio(_mama)
+		
+		_get_node_audios(_mama)
 		
 		if (_assets_paths.audios[key] as Array).empty():
 			_assets_paths.audios.erase(key)
@@ -135,7 +138,7 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 			_report.erase(key)
 
 
-func _go_through_nodes(node: Node, tree := '') -> void:
+func _get_node_images(node: Node, tree := '') -> void:
 	_save_node_texture(node, '.')
 	
 	for c in node.get_children():
@@ -148,66 +151,20 @@ func _go_through_nodes(node: Node, tree := '') -> void:
 		# not c.filename: para ignorar los nodos que sean una instancia de
 		# otra escena.
 		if not c.filename and not c.get_children().empty():
-			_go_through_nodes(c, node_path)
+			_get_node_images(c, node_path)
 
 
 func _save_node_texture(node: Node, node_path: String) -> void:
-	match node.get_class():
-		'TextureRect', 'Sprite':
-			_add_texture(node_path, node.texture)
-		'CheckBox':
-			var cb: CheckBox = node
-			_add_texture(
-				node_path,
-				cb.get_icon('checked'),
-				'checked'
-			)
-			_add_texture(
-				node_path,
-				cb.get_icon('unchecked'),
-				'unchecked'
-			)
-		'Button':
-			var b: Button = node
-			
-			_add_texture(
-				node_path,
-				b.icon,
-				'icon'
-			)
-			
-			if b.get_stylebox('normal') is StyleBoxTexture:
-				_add_texture(
-					node_path,
-					(b.get_stylebox('normal') as StyleBoxTexture).texture,
-					'stylebox_normal'
-				)
-			
-			if b.get_stylebox('hover') is StyleBoxTexture:
-				_add_texture(
-					node_path,
-					(b.get_stylebox('hover') as StyleBoxTexture).texture,
-					'stylebox_hover'
-				)
-		'TextureButton':
-			var tb: TextureButton = node
-			_add_texture(
-				node_path,
-				tb.texture_normal,
-				'texture_normal'
-			)
-			_add_texture(
-				node_path,
-				tb.texture_pressed,
-				'texture_pressed'
-			)
-		'Label':
-			var l: Label = node
-			if l.get_stylebox('normal').get_class() == 'StyleBoxTexture':
-				_add_texture(
-					node_path,
-					(l.get_stylebox('normal') as StyleBoxTexture).texture
-				)
+	var data: Array = _customs.get_node_texture(node)
+	
+	if data.empty():
+		data = SetGet.get_node_texture(node)
+	
+	for d in data:
+		if d is Texture:
+			_add_texture(node_path, d)
+		else:
+			_add_texture(node_path, d[0], d[1])
 
 
 func _add_texture(node_path: String, texture: Texture, style := '') -> void:
@@ -229,29 +186,33 @@ func _add_texture(node_path: String, texture: Texture, style := '') -> void:
 #	_assets_paths.images[get_key_name(_mama.filename)].append(new_entry)
 
 
-func _get_node_audio(node: Node, tree := '') -> void:
+func _get_node_audios(node: Node, tree := '') -> void:
+	_save_node_audio(node, '.')
+	
 	for c in node.get_children():
 		var node_path := _get_tree_text(tree, c.name)
-
-		match c.get_class():
-			'AudioStreamPlayer':
-				_add_stream(
-					node_path,
-					(c as AudioStreamPlayer).stream
-				)
-			'AudioStreamPlayer2D':
-				_add_stream(
-					node_path,
-					(c as AudioStreamPlayer2D).stream
-				)
+		_save_node_audio(c, node_path)
 	
 		# not c.filename: para ignorar los nodos que sean una instancia de
 		# otra escena.
 		if not c.filename and not c.get_children().empty():
-			_get_node_audio(c, node_path)
+			_get_node_audios(c, node_path)
 
 
-func _add_stream(node_path: String, stream: AudioStream) -> void:
+func _save_node_audio(node: Node, node_path: String) -> void:
+	var data: Array = _customs.get_node_stream(node)
+	
+	if data.empty():
+		data = SetGet.get_node_stream(node)
+	
+	for d in data:
+		if d is AudioStream:
+			_add_stream(node_path, d)
+		else:
+			_add_stream(node_path, d[0], d[1])
+
+
+func _add_stream(node_path: String, stream: AudioStream, extra := '') -> void:
 	if not stream: return
 	
 	var new_entry := {
@@ -259,6 +220,9 @@ func _add_stream(node_path: String, stream: AudioStream) -> void:
 		mama = _mama.name,
 		path = get_audio_web_path(stream)
 	}
+	
+	if extra:
+		new_entry['extra'] = extra
 	
 	_assets_paths.audios[_mama.filename].append(new_entry)
 #	_assets_paths.audios[get_key_name(_mama.filename)].append(new_entry)

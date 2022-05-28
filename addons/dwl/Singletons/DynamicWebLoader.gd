@@ -7,6 +7,8 @@ signal load_started(total_files)
 signal load_progress(loaded_files, total_files)
 signal load_done(scene_path)
 
+const SetGet := preload('res://addons/dwl/Tools/DWLSetGet.gd')
+
 var _load_counts := {}
 var _loaded_files := 0
 var _total_files := 0
@@ -282,47 +284,23 @@ func _assign_asset(ext: String, res, data: Dictionary, mama: Node):
 				mama.set_prop_texture(data.prop, res)
 			return
 		
-		var node := mama.get_node(data.node)
-		match node.get_class():
-			'TextureRect', 'Sprite':
-				node.texture = res
-			'CheckBox':
-				(node as CheckBox).add_icon_override(data.style, res)
-			'TextureButton':
-				var tb: TextureButton = node
-				
-				match data.style:
-					'texture_normal':
-						tb.texture_normal = res
-					'texture_pressed':
-						tb.texture_pressed = res
-			'Button':
-				var b: Button = node
-				
-				match data.style:
-					'icon':
-						b.icon = res
-					'stylebox_normal':
-						(b.get_stylebox('normal') as StyleBoxTexture).texture =\
-						res
-					'stylebox_hover':
-						(b.get_stylebox('hover') as StyleBoxTexture).texture =\
-						res
-			'Label':
-				(node.get_stylebox('normal') as StyleBoxTexture).texture =\
-				res
+		if not _customs.set_node_texture(\
+		mama.get_node(data.node), res, data.style if data.has('style') else ''):
+			SetGet.set_node_texture(
+				mama.get_node(data.node),
+				res,
+				data.style if data.has('style') else ''
+			)
 	else:
 		if data.has('prop'):
 			if mama.has_method('set_prop_stream'):
 				mama.set_prop_stream(data.prop, res)
 			return
 		
-		var node := mama.get_node(data.node)
-		match node.get_class():
-			'AudioStreamPlayer':
-				node.stream = res
-				(node as AudioStreamPlayer).play()
-			'AudioStreamPlayer2D':
-				node.stream = res
-				(node as AudioStreamPlayer2D).play()
-#		A.set_on_demand_audio(res, resource_name)
+		if not _customs.set_node_stream(\
+		mama.get_node(data.node), res, data.extra if data.has('extra') else ''):
+			SetGet.set_node_stream(
+				mama.get_node(data.node),
+				res,
+				data.extra if data.has('extra') else ''
+			)
