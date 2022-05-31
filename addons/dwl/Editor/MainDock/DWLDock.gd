@@ -1,5 +1,5 @@
 tool
-extends Panel
+extends Control
 
 signal json_requested
 signal config_file_opened
@@ -12,10 +12,13 @@ onready var _btn_generate_json: Button = find_node('BtnGenerateJSON')
 onready var _btn_open_config: Button = find_node('BtnOpenConfig')
 onready var _btn_copy_files: Button = find_node('BtnCopyFiles')
 onready var _generation_result: Label = find_node('GenerationResult')
+onready var _result_tree: Tree = find_node('ResultTree')
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos de Godot ░░░░
 func _ready() -> void:
+	_result_tree.hide_root = true
+	
 	_btn_generate_json.connect('pressed', self, '_generate_json')
 	_btn_open_config.connect('pressed', self, '_open_config_file')
 	_btn_copy_files.connect('pressed', self, '_copy_files')
@@ -23,24 +26,36 @@ func _ready() -> void:
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos públicos ░░░░
 func update_result(time: Dictionary, report: Dictionary) -> void:
-	_generation_result.text = 'Se creó el archivo JSON en %s/%s/%d > %s:%s:%s'\
-	% [
-		str(time.day).pad_zeros(2),
-		str(time.month).pad_zeros(2),
-		time.year,
-		# >
+	_generation_result.text = 'Se creó el archivo JSON a las %s:%s:%s' %\
+	[
 		str(time.hour).pad_zeros(2),
 		str(time.minute).pad_zeros(2),
 		str(time.second).pad_zeros(2)
 	]
 	
-	_generation_result.text += '\n\n'
+	if _result_tree.get_root():
+		_result_tree.get_root().free()
 	
+	var _tree_root := _result_tree.create_item()
 	for d in report:
-		_generation_result.text += '%s [images (%d), audios (%d)]' % [
-			d, report[d].images, report[d].audios
-		]
-		_generation_result.text += '\n'
+		var item := _result_tree.create_item(_tree_root)
+		item.set_text(0, d)
+		
+		if not report[d].audios.empty():
+			var audios := _result_tree.create_item(item)
+			audios.set_text(0, 'audios (%d)' % report[d].audios.size())
+			
+			for a in report[d].audios:
+				var audio_item := _result_tree.create_item(audios)
+				audio_item.set_text(0, a)
+		
+		if not report[d].images.empty():
+			var images := _result_tree.create_item(item)
+			images.set_text(0, 'images (%d)' % report[d].images.size())
+			
+			for i in report[d].images:
+				var image_item := _result_tree.create_item(images)
+				image_item.set_text(0, i)
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos privados ░░░░
@@ -88,52 +103,7 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 				
 				if not directory.dir_exists(target_path):
 					directory.make_dir_recursive(target_path.get_base_dir())
-					directory.copy(path, target_path)
-
-#		if not _editor_file_system.get_file_type(path) == 'PackedScene':
-#			continue
-#
-#		var key: String = path
-##		var key := get_key_name(path)
-#		_mama = (ResourceLoader.load(path) as PackedScene).instance()
-#
-#		_report[key] = {images = 0, audios = 0}
-#
-#		# ---- Obtener las imágenes del nodo y sus hijos -----------------------
-#		_assets_paths.images[key] = []
-#
-#		if _mama.has_method('get_prop_textures'):
-#			var props: Array = _mama.get_prop_textures()
-#			var textures := []
-#
-#			for p in props:
-#				textures.append({
-#					prop = p.prop,
-#					path = get_texture_web_path(p.texture)
-#				})
-#
-#			_assets_paths.images[key].append_array(textures)
-#
-#		_get_node_images(_mama)
-#
-#		if (_assets_paths.images[key] as Array).empty():
-#			_assets_paths.images.erase(key)
-#		else:
-#			_report[key].images = _assets_paths.images[key].size()
-#
-#		# ---- Obtener los audios del nodo y sus hijos -------------------------
-#		_assets_paths.audios[key] = []
-#
-#		if _mama.has_method('get_on_demand_audios'):
-#			var audios: Dictionary = _mama.get_on_demand_audios()
-#			_assets_paths.audios = audios
-#
-#		_get_node_audios(_mama)
-#
-#		if (_assets_paths.audios[key] as Array).empty():
-#			_assets_paths.audios.erase(key)
-#		else:
-#			_report[key].audios = _assets_paths.audios[key].size()
-#
-#		if not _report[key].images and not _report[key].audios:
-#			_report.erase(key)
+					var err: int = directory.copy(path, target_path)
+					
+					if err != OK:
+						prints('[DWL] Could not copy %s' % path)

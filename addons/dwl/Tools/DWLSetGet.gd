@@ -3,14 +3,17 @@ tool
 # ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 const TYPES := {
+	# Control
 	TEXTURE_RECT = 'TextureRect',
-	SPRITE = 'Sprite',
 	CHECKBOX = 'CheckBox',
 	BUTTON = 'Button',
 	TEXTURE_BUTTON = 'TextureButton',
 	LABEL = 'Label',
 	PROGRESS_BAR = 'ProgressBar',
 	TEXTURE_PROGRESS = 'TextureProgress',
+	# 2D
+	SPRITE = 'Sprite',
+	# 3D
 	# Audio
 	AUDIO_STREAM_PLAYER = 'AudioStreamPlayer',
 	AUDIO_STREAM_PLAYER_2D = 'AudioStreamPlayer2D',
@@ -53,6 +56,8 @@ static func get_node_texture(node: Node) -> Array:
 				response.append(
 					(l.get_stylebox('normal') as StyleBoxTexture).texture
 				)
+		_:
+			prints('Textura para nodo %s(%s)' % [node.name, node.get_class()])
 	
 	return response
 

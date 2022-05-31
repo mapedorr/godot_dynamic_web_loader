@@ -5,7 +5,7 @@ extends EditorPlugin
 const MAIN_DOCK := preload('res://addons/dwl/Editor/MainDock/DWLDock.tscn')
 const SetGet := preload('res://addons/dwl/Tools/DWLSetGet.gd')
 
-var main_dock: Panel
+var main_dock: Control
 
 var _editor_interface := get_editor_interface()
 var _editor_file_system := _editor_interface.get_resource_filesystem()
@@ -33,7 +33,8 @@ func _enter_tree() -> void:
 	
 	main_dock.connect('json_requested', self, '_create_json')
 	
-	add_control_to_dock(DOCK_SLOT_RIGHT_BR, main_dock)
+#	add_control_to_dock(DOCK_SLOT_RIGHT_BR, main_dock)
+	add_control_to_bottom_panel(main_dock, 'Dynamic Web Loader')
 
 
 func _exit_tree() -> void:
@@ -97,7 +98,7 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 #		var key := get_key_name(path)
 		_mama = (ResourceLoader.load(path) as PackedScene).instance()
 		
-		_report[key] = {images = 0, audios = 0}
+		_report[key] = {images = [], audios = []}
 
 		# ---- Obtener las imágenes del nodo y sus hijos -----------------------
 		_assets_paths.images[key] = []
@@ -111,6 +112,7 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 					prop = p.prop,
 					path = get_texture_web_path(p.texture)
 				})
+				_report[key].images.append(get_texture_web_path(p.texture))
 			
 			_assets_paths.images[key].append_array(textures)
 		
@@ -118,24 +120,24 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 		
 		if (_assets_paths.images[key] as Array).empty():
 			_assets_paths.images.erase(key)
-		else:
-			_report[key].images = _assets_paths.images[key].size()
+#		else:
+#			_report[key].images = _assets_paths.images[key].size()
 		
 		# ---- Obtener los audios del nodo y sus hijos -------------------------
 		_assets_paths.audios[key] = []
 		
-		if _mama.has_method('get_on_demand_audios'):
-			var audios: Dictionary = _mama.get_on_demand_audios()
-			_assets_paths.audios = audios
+#		if _mama.has_method('get_on_demand_audios'):
+#			var audios: Dictionary = _mama.get_on_demand_audios()
+#			_assets_paths.audios = audios
 		
 		_get_node_audios(_mama)
 		
 		if (_assets_paths.audios[key] as Array).empty():
 			_assets_paths.audios.erase(key)
-		else:
-			_report[key].audios = _assets_paths.audios[key].size()
+#		else:
+#			_report[key].audios = _assets_paths.audios[key].size()
 		
-		if not _report[key].images and not _report[key].audios:
+		if _report[key].images.empty() and _report[key].audios.empty():
 			_report.erase(key)
 
 
@@ -186,6 +188,8 @@ func _add_texture(node_path: String, texture: Texture, style := '') -> void:
 	_assets_paths.images[_mama.filename].append(new_entry)
 #	_assets_paths.images[get_key_name(_mama.filename)].append(new_entry)
 
+	_report[_mama.filename].images.append(get_texture_web_path(texture))
+
 
 func _get_node_audios(node: Node, tree := '') -> void:
 	_save_node_audio(node, '.')
@@ -227,6 +231,8 @@ func _add_stream(node_path: String, stream: AudioStream, extra := '') -> void:
 	
 	_assets_paths.audios[_mama.filename].append(new_entry)
 #	_assets_paths.audios[get_key_name(_mama.filename)].append(new_entry)
+	
+	_report[_mama.filename].audios.append(get_audio_web_path(stream))
 
 
 func _get_tree_text(parent_name: String, node_name: String) -> String:

@@ -24,11 +24,9 @@ onready var _customs := DWLResources.get_customs()
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos de Godot ░░░░
 func _ready() -> void:
+#	get_tree().connect('tree_changed', self, 'testo') # Puede ser la plena
 	if OS.has_feature('dwl'):
 		get_tree().connect('node_added', self, 'on_node_added')
-#	get_tree().connect('tree_changed', self, 'testo') # Puede ser la plena
-	
-	if OS.has_feature('dwl'):
 		# _load_json() # Para cargar el JSON si está en el .pck
 		
 		var http_request = HTTPRequest.new()

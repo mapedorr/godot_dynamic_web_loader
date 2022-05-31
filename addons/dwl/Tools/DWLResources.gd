@@ -11,9 +11,17 @@ static func init_files() -> void:
 	var directory := Directory.new()
 	if not directory.dir_exists(RESOURCES_DIR):
 		directory.make_dir_recursive(RESOURCES_DIR)
+		
+		# Copiar archivo de configuración
 		directory.copy(
 			'res://addons/dwl/Config/dwl_config.tres',
 			str(RESOURCES_DIR, '/dwl_config.tres')
+		)
+		
+		# Copiar archivo de funciones personalizadas
+		directory.copy(
+			'res://addons/dwl/Config/DWLCustoms.gd',
+			str(RESOURCES_DIR, '/DWLCustoms.gd')
 		)
 
 
