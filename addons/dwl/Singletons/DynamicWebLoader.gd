@@ -6,6 +6,7 @@ signal asset_ready(dic)
 signal load_started(total_files)
 signal load_progress(loaded_files, total_files)
 signal load_done(scene_path)
+signal json_loaded
 
 const SetGet := preload('res://addons/dwl/Tools/DWLSetGet.gd')
 
@@ -16,6 +17,9 @@ var _total_files := 0
 # Si la llave existe y tiene el asset, entonces ya se cargó el asset
 # Si la llave no existe, entonces se tiene que descargar el asset
 var _loaded_assets := {}
+# Diccionario con la información de los nodos (value) que están esperando a que
+# se termine de cargar un asset (key)
+var _waiting_for_asset := {}
 
 var dwl_dic := {}
 
@@ -26,7 +30,6 @@ onready var _customs := DWLResources.get_customs()
 func _ready() -> void:
 #	get_tree().connect('tree_changed', self, 'testo') # Puede ser la plena
 	if OS.has_feature('dwl'):
-		get_tree().connect('node_added', self, 'on_node_added')
 		# _load_json() # Para cargar el JSON si está en el .pck
 		
 		var http_request = HTTPRequest.new()
@@ -57,23 +60,28 @@ func preload_assets(scene_path: String) -> void:
 
 # Carga los assets (imágenes y audios) para un nodo y se los asigna a este y a
 # sus hijos.
-func load_node_assets(node: Node) -> void:
+func load_node_assets(node: Node, load_grandchilds := false) -> void:
 	_load_assets(node)
+	
+	if load_grandchilds:
+		var grandchilds: Array = dwl_dic.grandchilds[node.filename]\
+		if dwl_dic.grandchilds.has(node.filename)\
+		else []
+		
+		for gc in grandchilds:
+			_load_assets(node.get_node(gc.path))
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos privados ░░░░
-func _load_json():
-	var file = File.new()
-	
-	if not file.file_exists('res://dwl/dwl.json'):
-		prints('NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO')
-		return
-	
-	file.open('res://dwl/dwl.json', File.READ)
-	var data = parse_json(file.get_as_text())
-	var file_data = data
-	
-	prints(file_data)
+#func _load_json():
+#	var file = File.new()
+#
+#	if not file.file_exists('res://dwl/dwl.json'):
+#		return
+#
+#	file.open('res://dwl/dwl.json', File.READ)
+#	var data = parse_json(file.get_as_text())
+#	var file_data = data
 
 
 func _json_request_completed(
@@ -86,11 +94,24 @@ func _json_request_completed(
 ) -> void:
 	http_request.queue_free()
 	
+	# Sólo conectarse a esta señal cuando el JSON ya esté listo para decirnos
+	# si un nodo añadido al árbol tiene assets asociados.
+	get_tree().connect('node_added', self, 'on_node_added')
+	
 	var response = parse_json(body.get_string_from_utf8())
 	dwl_dic = response
 	
-	if dwl_dic.images.has(get_tree().current_scene.filename):
-		load_node_assets(get_tree().current_scene)
+	for c in get_tree().root.get_children():
+		load_node_assets(c)
+		
+		# TODO: ¿Será obligatorio hacer algo para que recorra todos los hijos
+		# de todos los nodos en la escena en busca de assets para cargar?
+		# Puede ser que sólo recorra hijos de nodos que tengan filename (o sea,
+		# que sean instancias de .tscn).
+		for c2 in c.get_children():
+			load_node_assets(c2)
+	
+	emit_signal('json_loaded')
 
 
 # src puede ser un String o un Node
@@ -126,15 +147,21 @@ func _load_assets(src) -> void:
 				# asset
 				# TODO: Hacer algo para que cuando se cargue el asset se asigne
 				# a todos los nodos que lo están esperando.
-				pass
+				if not _waiting_for_asset.has(asset_copy.path):
+					_waiting_for_asset[asset_copy.path] = []
+				
+				_waiting_for_asset[asset_copy.path].append({
+					data = asset_copy,
+					mama = src
+				})
 			
 			continue
 		
 		_request_asset(asset_copy.path.get_extension(), asset_copy, src)
 	
-	if _total_files == 0: return
+	if _total_files == 0:
+		return
 	
-	prints('Archivos a cargar', _total_files)
 	emit_signal('load_started', _total_files)
 
 
@@ -260,7 +287,6 @@ func _asset_downloaded(
 	if node:
 		_assign_asset(ext, res, data, node)
 	
-	prints('Archivo cargado:', data.path.get_file())
 	http_request.queue_free()
 	
 	emit_signal('load_progress', _loaded_files, _total_files)
@@ -289,6 +315,15 @@ func _assign_asset(ext: String, res, data: Dictionary, mama: Node):
 				res,
 				data.style if data.has('style') else ''
 			)
+		
+		if _waiting_for_asset.has(data.path):
+			for dic in _waiting_for_asset[data.path]:
+				SetGet.set_node_texture(
+					dic.mama.get_node(dic.data.node),
+					res,
+					dic.data.style if dic.data.has('style') else ''
+				)
+		
 	else:
 		if data.has('prop'):
 			if mama.has_method('set_prop_stream'):

@@ -10,7 +10,7 @@ var main_dock: Control
 var _editor_interface := get_editor_interface()
 var _editor_file_system := _editor_interface.get_resource_filesystem()
 var _directory := Directory.new()
-var _assets_paths := { audios = {}, images = {} }
+var _assets_paths := { audios = {}, images = {}, grandchilds = {} }
 var _mama: Node = null
 var _report := {}
 
@@ -139,10 +139,19 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 		
 		if _report[key].images.empty() and _report[key].audios.empty():
 			_report.erase(key)
+		
+		# ---- Obtener los nietos del nodo -------------------------------------
+		_assets_paths.grandchilds[key] = []
+		
+		_get_node_grandchilds(_mama)
+		
+		if (_assets_paths.grandchilds[key] as Array).empty():
+			_assets_paths.grandchilds.erase(key)
 
 
-func _get_node_images(node: Node, tree := '') -> void:
-	_save_node_texture(node, '.')
+func _get_node_images(node: Node, tree := '', ignore_first := false) -> void:
+	if not ignore_first:
+		_save_node_texture(node, '.')
 	
 	for c in node.get_children():
 		if c.filename:
@@ -154,7 +163,7 @@ func _get_node_images(node: Node, tree := '') -> void:
 		# not c.filename: para ignorar los nodos que sean una instancia de
 		# otra escena.
 		if not c.filename and not c.get_children().empty():
-			_get_node_images(c, node_path)
+			_get_node_images(c, node_path, true)
 
 
 func _save_node_texture(node: Node, node_path: String) -> void:
@@ -166,7 +175,7 @@ func _save_node_texture(node: Node, node_path: String) -> void:
 	for d in data:
 		if d is Texture:
 			_add_texture(node_path, d)
-		else:
+		elif d:
 			_add_texture(node_path, d[0], d[1])
 
 
@@ -233,6 +242,20 @@ func _add_stream(node_path: String, stream: AudioStream, extra := '') -> void:
 #	_assets_paths.audios[get_key_name(_mama.filename)].append(new_entry)
 	
 	_report[_mama.filename].audios.append(get_audio_web_path(stream))
+
+
+func _get_node_grandchilds(node: Node, tree := '') -> void:
+	for c in node.get_children():
+		var node_path := _get_tree_text(tree, c.name)
+		
+		if c.filename:
+			_assets_paths.grandchilds[_mama.filename].append({
+				res = c.filename,
+				path = node_path
+			})
+		
+		if not c.filename and not c.get_children().empty():
+			_get_node_grandchilds(c, node_path)
 
 
 func _get_tree_text(parent_name: String, node_name: String) -> String:

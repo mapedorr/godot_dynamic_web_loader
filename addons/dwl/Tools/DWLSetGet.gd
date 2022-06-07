@@ -11,9 +11,13 @@ const TYPES := {
 	LABEL = 'Label',
 	PROGRESS_BAR = 'ProgressBar',
 	TEXTURE_PROGRESS = 'TextureProgress',
+	PANEL_CONTAIER = 'PanelContainer',
+	PANEL = 'Panel',
+	NINE_PATCH_RECT = 'NinePatchRect',
 	# 2D
 	SPRITE = 'Sprite',
 	# 3D
+	MESH_INSTANCE = 'MeshInstance',
 	# Audio
 	AUDIO_STREAM_PLAYER = 'AudioStreamPlayer',
 	AUDIO_STREAM_PLAYER_2D = 'AudioStreamPlayer2D',
@@ -25,7 +29,7 @@ static func get_node_texture(node: Node) -> Array:
 	var response := []
 	
 	match node.get_class():
-		TYPES.TEXTURE_RECT, TYPES.SPRITE:
+		TYPES.TEXTURE_RECT, TYPES.SPRITE, TYPES.NINE_PATCH_RECT:
 			response.append(node.texture)
 		TYPES.CHECKBOX:
 			var cb: CheckBox = node
@@ -56,8 +60,14 @@ static func get_node_texture(node: Node) -> Array:
 				response.append(
 					(l.get_stylebox('normal') as StyleBoxTexture).texture
 				)
-		_:
-			prints('Textura para nodo %s(%s)' % [node.name, node.get_class()])
+		TYPES.MESH_INSTANCE:
+			var mi: MeshInstance = node
+			response.append([
+				(mi.get_active_material(0) as SpatialMaterial).albedo_texture,
+				'albedo'
+			])
+#		_:
+#			prints('Textura para nodo %s(%s)' % [node.name, node.get_class()])
 	
 	return response
 
@@ -76,7 +86,7 @@ static func get_node_stream(node: Node) -> Array:
 
 static func set_node_texture(node: Node, texture: Texture, style := '') -> void:
 	match node.get_class():
-		TYPES.TEXTURE_RECT, TYPES.SPRITE:
+		TYPES.TEXTURE_RECT, TYPES.SPRITE, TYPES.NINE_PATCH_RECT:
 			node.texture = texture
 		TYPES.CHECKBOX:
 			(node as CheckBox).add_icon_override(style, texture)
@@ -103,6 +113,11 @@ static func set_node_texture(node: Node, texture: Texture, style := '') -> void:
 		TYPES.LABEL:
 			(node.get_stylebox('normal') as StyleBoxTexture).texture =\
 			texture
+		TYPES.MESH_INSTANCE:
+			var sm: SpatialMaterial = node.get_active_material(0)
+			match style:
+				'albedo':
+					sm.albedo_texture = texture
 
 
 static func set_node_stream(node: Node, stream: AudioStream, extra := '') -> void:
