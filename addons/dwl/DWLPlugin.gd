@@ -103,8 +103,8 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 		# ---- Obtener las imágenes del nodo y sus hijos -----------------------
 		_assets_paths.images[key] = []
 
-		if _mama.has_method('get_prop_textures'):
-			var props: Array = _mama.get_prop_textures()
+		if _mama.has_method('get_custom_textures'):
+			var props: Array = _mama.get_custom_textures()
 			var textures := []
 			
 			for p in props:
@@ -126,9 +126,21 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 		# ---- Obtener los audios del nodo y sus hijos -------------------------
 		_assets_paths.audios[key] = []
 		
-#		if _mama.has_method('get_on_demand_audios'):
-#			var audios: Dictionary = _mama.get_on_demand_audios()
-#			_assets_paths.audios = audios
+		if _mama.has_method('get_custom_audios'):
+			var props: Array = _mama.get_custom_audios()
+			var audios := []
+			
+			for p in props:
+				if p.has('custom_load'):
+					audios.append(p)
+				else:
+					audios.append({
+						prop = p.prop,
+						path = get_texture_web_path(p.texture)
+					})
+					_report[key].audios.append(get_texture_web_path(p.texture))
+			
+			_assets_paths.audios[key].append_array(audios)
 		
 		_get_node_audios(_mama)
 		

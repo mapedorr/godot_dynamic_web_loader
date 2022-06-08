@@ -9,11 +9,11 @@ const TYPES := {
 	BUTTON = 'Button',
 	TEXTURE_BUTTON = 'TextureButton',
 	LABEL = 'Label',
-	PROGRESS_BAR = 'ProgressBar',
+	NINE_PATCH_RECT = 'NinePatchRect',
 	TEXTURE_PROGRESS = 'TextureProgress',
+	PROGRESS_BAR = 'ProgressBar',
 	PANEL_CONTAIER = 'PanelContainer',
 	PANEL = 'Panel',
-	NINE_PATCH_RECT = 'NinePatchRect',
 	# 2D
 	SPRITE = 'Sprite',
 	# 3D
@@ -60,12 +60,25 @@ static func get_node_texture(node: Node) -> Array:
 				response.append(
 					(l.get_stylebox('normal') as StyleBoxTexture).texture
 				)
+		TYPES.TEXTURE_PROGRESS:
+			var tp: TextureProgress = node
+			
+			if tp.texture_under:
+				response.append([tp.texture_under, 'under'])
+			
+			if tp.texture_progress:
+				response.append([tp.texture_progress, 'progress'])
+			
+			if tp.texture_over:
+				response.append([tp.texture_over, 'over'])
 		TYPES.MESH_INSTANCE:
 			var mi: MeshInstance = node
-			response.append([
-				(mi.get_active_material(0) as SpatialMaterial).albedo_texture,
-				'albedo'
-			])
+			
+			if mi.get_active_material(0):
+				response.append([
+					(mi.get_active_material(0) as SpatialMaterial).albedo_texture,
+					'albedo'
+				])
 #		_:
 #			prints('Textura para nodo %s(%s)' % [node.name, node.get_class()])
 	
@@ -113,6 +126,16 @@ static func set_node_texture(node: Node, texture: Texture, style := '') -> void:
 		TYPES.LABEL:
 			(node.get_stylebox('normal') as StyleBoxTexture).texture =\
 			texture
+		TYPES.TEXTURE_PROGRESS:
+			var tp: TextureProgress = node
+			
+			match style:
+				'under':
+					tp.texture_under = texture
+				'progress':
+					tp.texture_progress = texture
+				'over':
+					tp.texture_over = texture
 		TYPES.MESH_INSTANCE:
 			var sm: SpatialMaterial = node.get_active_material(0)
 			match style:

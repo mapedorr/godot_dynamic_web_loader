@@ -26,7 +26,7 @@ func _add_cosos() -> void:
 		add_child(s2)
 
 
-func get_prop_textures() -> Array:
+func get_custom_textures() -> Array:
 	var textures := [
 		{
 			prop = 'txt',

@@ -72,6 +72,12 @@ func load_node_assets(node: Node, load_grandchilds := false) -> void:
 			_load_assets(node.get_node(gc.path))
 
 
+func get_asset(path: String) -> Resource:
+	if _loaded_assets.has(path):
+		return _loaded_assets[path]
+	return null
+
+
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos privados ░░░░
 #func _load_json():
 #	var file = File.new()
@@ -124,6 +130,11 @@ func _load_assets(src) -> void:
 	}
 	
 	for asset in _get_assets_data(id):
+		if asset.has('custom_load'):
+			if src.has_method('load_custom'):
+				src.load_custom(asset)
+			continue
+		
 		var ext: String = asset.path.get_extension()
 		var asset_copy := (asset as Dictionary).duplicate()
 		# Obtener la ruta del asset en base a posibles reglas definidas por la
