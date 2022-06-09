@@ -43,7 +43,7 @@ func get_custom_textures() -> Array:
 	return textures
 
 
-func set_prop_texture(prop: String, texture: Texture) -> void:
+func set_custom_texture(prop: String, texture: Texture) -> void:
 	if prop == 'txt':
 		txt = texture
 	elif prop == 'texturitas':

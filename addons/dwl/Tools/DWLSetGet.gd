@@ -72,13 +72,17 @@ static func get_node_texture(node: Node) -> Array:
 			if tp.texture_over:
 				response.append([tp.texture_over, 'over'])
 		TYPES.MESH_INSTANCE:
-			var mi: MeshInstance = node
+			var m: Material = (node as MeshInstance).get_active_material(0)
 			
-			if mi.get_active_material(0):
-				response.append([
-					(mi.get_active_material(0) as SpatialMaterial).albedo_texture,
-					'albedo'
-				])
+			if not m: continue
+			
+			match m.get_class():
+				'SpatialMaterial':
+					var sm := m as SpatialMaterial
+					
+					for i in sm.TEXTURE_MAX:
+						if sm.get_texture(i):
+							response.append([sm.get_texture(i), str(i)])
 #		_:
 #			prints('Textura para nodo %s(%s)' % [node.name, node.get_class()])
 	
@@ -137,10 +141,13 @@ static func set_node_texture(node: Node, texture: Texture, style := '') -> void:
 				'over':
 					tp.texture_over = texture
 		TYPES.MESH_INSTANCE:
-			var sm: SpatialMaterial = node.get_active_material(0)
-			match style:
-				'albedo':
-					sm.albedo_texture = texture
+			var m: Material = (node as MeshInstance).get_active_material(0)
+			
+			if not m: continue
+			
+			match m.get_class():
+				'SpatialMaterial':
+					(m as SpatialMaterial).set_texture(int(style), texture)
 
 
 static func set_node_stream(node: Node, stream: AudioStream, extra := '') -> void:

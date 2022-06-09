@@ -266,7 +266,7 @@ func _get_node_grandchilds(node: Node, tree := '') -> void:
 				path = node_path
 			})
 		
-		if not c.filename and not c.get_children().empty():
+		if not c.get_children().empty():
 			_get_node_grandchilds(c, node_path)
 
 

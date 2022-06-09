@@ -54,8 +54,17 @@ func on_node_added(node: Node) -> void:
 
 # Carga los assets (imágenes y audios) en base al nombre del nodo.
 # Útil para pre-cargar los assets de un nodo que aún no se ha añadido al árbol.
-func preload_assets(scene_path: String) -> void:
+func preload_assets(scene_path: String, load_grandchilds := false) -> void:
 	_load_assets(scene_path)
+	
+	if load_grandchilds:
+		var grandchilds: Array = dwl_dic.grandchilds[scene_path]\
+		if dwl_dic.grandchilds.has(scene_path)\
+		else []
+		
+		for gc in grandchilds:
+			var node: Node = load(scene_path).instance()
+			_load_assets(node.get_node(gc.path))
 
 
 # Carga los assets (imágenes y audios) para un nodo y se los asigna a este y a
@@ -76,6 +85,14 @@ func get_asset(path: String) -> Resource:
 	if _loaded_assets.has(path):
 		return _loaded_assets[path]
 	return null
+
+
+func custom_load_finished(id: String, assets_count := 0) -> void:
+	_loaded_files += assets_count
+	
+	if _load_counts.has(id):
+		_load_counts[id].loaded_files += assets_count
+		_check_load_count(id)
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos privados ░░░░
@@ -132,7 +149,9 @@ func _load_assets(src) -> void:
 	for asset in _get_assets_data(id):
 		if asset.has('custom_load'):
 			if src.has_method('load_custom'):
-				src.load_custom(asset)
+				var assets_count: int = src.load_custom(asset)
+				_load_counts[id].total_files += assets_count
+				_total_files += assets_count
 			continue
 		
 		var ext: String = asset.path.get_extension()
@@ -302,7 +321,11 @@ func _asset_downloaded(
 	
 	emit_signal('load_progress', _loaded_files, _total_files)
 	
-	if mama_counts.loaded_files == mama_counts.total_files:
+	_check_load_count(id)
+
+
+func _check_load_count(id: String) -> void:
+	if _load_counts[id].loaded_files == _load_counts[id].total_files:
 		yield(get_tree(), 'idle_frame')
 		
 		if $HTTPRequestContainers.get_child_count() == 0:
@@ -315,8 +338,8 @@ func _asset_downloaded(
 func _assign_asset(ext: String, res, data: Dictionary, mama: Node):
 	if ext == 'png' or ext == 'jpg':
 		if data.has('prop'):
-			if mama.has_method('set_prop_texture'):
-				mama.set_prop_texture(data.prop, res)
+			if mama.has_method('set_custom_texture'):
+				mama.set_custom_texture(data.prop, res)
 			return
 		
 		if not _customs.set_node_texture(\
@@ -334,6 +357,7 @@ func _assign_asset(ext: String, res, data: Dictionary, mama: Node):
 					res,
 					dic.data.style if dic.data.has('style') else ''
 				)
+			_waiting_for_asset.erase(data.path)
 		
 	else:
 		if data.has('prop'):
