@@ -148,10 +148,16 @@ func _load_assets(src) -> void:
 	
 	for asset in _get_assets_data(id):
 		if asset.has('custom_load'):
+			if typeof(src) == TYPE_STRING:
+				# Si se está haciendo una precarga hay que asegurar que también
+				# se cargarán los assets de hacen parte de la carga personalizada
+				src = load(src).instance()
+			
 			if src.has_method('load_custom'):
 				var assets_count: int = src.load_custom(asset)
 				_load_counts[id].total_files += assets_count
 				_total_files += assets_count
+			
 			continue
 		
 		var ext: String = asset.path.get_extension()
