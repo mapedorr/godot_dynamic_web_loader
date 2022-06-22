@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=20 format=2]
 
 [ext_resource path="res://assets/images/map_bg.png" type="Texture" id=1]
 [ext_resource path="res://assets/audios/bg_hidden.ogg" type="AudioStream" id=2]
@@ -8,6 +8,10 @@
 [ext_resource path="res://src/Main.gd" type="Script" id=6]
 [ext_resource path="res://assets/images/player_interface/main_menu_btn_play.png" type="Texture" id=7]
 [ext_resource path="res://assets/fonts/OpenSans-Bold.ttf" type="DynamicFontData" id=8]
+[ext_resource path="res://assets/images/progress_bar_fg.png" type="Texture" id=9]
+[ext_resource path="res://assets/images/progress_bar_bg.png" type="Texture" id=10]
+[ext_resource path="res://assets/images/supermarket_fg.png" type="Texture" id=11]
+[ext_resource path="res://assets/images/supermarket_gauge.png" type="Texture" id=12]
 
 [sub_resource type="DynamicFont" id=2]
 size = 42
@@ -29,6 +33,22 @@ margin_right = 78.0
 margin_top = 34.0
 margin_bottom = 43.0
 modulate_color = Color( 1, 1, 1, 0.639216 )
+
+[sub_resource type="StyleBoxTexture" id=4]
+texture = ExtResource( 9 )
+region_rect = Rect2( 0, 0, 151, 719 )
+
+[sub_resource type="StyleBoxTexture" id=5]
+texture = ExtResource( 10 )
+region_rect = Rect2( 0, 0, 151, 719 )
+
+[sub_resource type="StyleBoxTexture" id=6]
+texture = ExtResource( 11 )
+region_rect = Rect2( 0, 0, 1920, 1080 )
+
+[sub_resource type="StyleBoxTexture" id=7]
+texture = ExtResource( 12 )
+region_rect = Rect2( 0, 0, 399, 448 )
 
 [node name="Main" type="Node2D"]
 script = ExtResource( 6 )
@@ -105,3 +125,26 @@ custom_styles/focus = SubResource( 1 )
 custom_styles/disabled = SubResource( 3 )
 custom_styles/normal = SubResource( 1 )
 text = "Cárgamesta"
+
+[node name="ProgressBar" type="ProgressBar" parent="PlayerInterface/Control"]
+margin_left = 482.0
+margin_top = 562.0
+margin_right = 578.0
+margin_bottom = 999.0
+custom_styles/fg = SubResource( 4 )
+custom_styles/bg = SubResource( 5 )
+value = 50.0
+
+[node name="Panel" type="Panel" parent="PlayerInterface/Control"]
+margin_left = 111.0
+margin_top = 145.0
+margin_right = 1109.0
+margin_bottom = 720.0
+custom_styles/panel = SubResource( 6 )
+
+[node name="PanelContainer" type="PanelContainer" parent="PlayerInterface/Control"]
+margin_left = 881.0
+margin_top = 459.0
+margin_right = 1099.0
+margin_bottom = 677.0
+custom_styles/panel = SubResource( 7 )

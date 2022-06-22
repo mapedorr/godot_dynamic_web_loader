@@ -35,13 +35,29 @@ size_flags_horizontal = 0
 size_flags_vertical = 0
 text = "Generar JSON"
 
-[node name="BtnCopyFiles" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="BtnOpenJSON" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
 margin_left = 102.0
-margin_right = 211.0
+margin_right = 180.0
+margin_bottom = 20.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+text = "Abrir JSON"
+
+[node name="BtnCopyFiles" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+margin_left = 184.0
+margin_right = 293.0
 margin_bottom = 20.0
 size_flags_horizontal = 0
 size_flags_vertical = 0
 text = "Copiar archivos"
+
+[node name="BtnOpenFolder" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+margin_left = 297.0
+margin_right = 425.0
+margin_bottom = 20.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+text = "Abrir carpeta DWL"
 
 [node name="BtnOpenConfig" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
 margin_left = 1766.0

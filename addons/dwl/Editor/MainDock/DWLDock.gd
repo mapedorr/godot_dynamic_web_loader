@@ -9,8 +9,10 @@ var efs: EditorFileSystem
 
 onready var directory := Directory.new()
 onready var _btn_generate_json: Button = find_node('BtnGenerateJSON')
+onready var _btn_open_json: Button = find_node('BtnOpenJSON')
 onready var _btn_open_config: Button = find_node('BtnOpenConfig')
 onready var _btn_copy_files: Button = find_node('BtnCopyFiles')
+onready var _btn_open_folder: Button = find_node('BtnOpenFolder')
 onready var _generation_result: Label = find_node('GenerationResult')
 onready var _result_tree: Tree = find_node('ResultTree')
 
@@ -20,8 +22,10 @@ func _ready() -> void:
 	_result_tree.hide_root = true
 	
 	_btn_generate_json.connect('pressed', self, '_generate_json')
-	_btn_open_config.connect('pressed', self, '_open_config_file')
+	_btn_open_json.connect('pressed', self, '_open_json')
 	_btn_copy_files.connect('pressed', self, '_copy_files')
+	_btn_open_folder.connect('pressed', self, '_open_folder')
+	_btn_open_config.connect('pressed', self, '_open_config_file')
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ métodos públicos ░░░░
@@ -63,6 +67,13 @@ func _generate_json() -> void:
 	emit_signal('json_requested')
 
 
+func _open_json() -> void:
+	if directory.dir_exists(DWLResources.get_json_path().get_base_dir()):
+		OS.shell_open(
+			ProjectSettings.globalize_path(DWLResources.get_json_path())
+		)
+
+
 func _open_config_file() -> void:
 	ei.edit_resource(load('res://dwl/dwl_config.tres'))
 
@@ -73,6 +84,11 @@ func _copy_files() -> void:
 	
 	# Se recorren las carpetas en busca de archivos de imagen y de audio
 	_read_path(dir)
+
+
+func _open_folder() -> void:
+	if directory.dir_exists('user://dwl/'):
+		OS.shell_open(ProjectSettings.globalize_path('user://dwl/'))
 
 
 func _read_path(dir: EditorFileSystemDirectory) -> void:

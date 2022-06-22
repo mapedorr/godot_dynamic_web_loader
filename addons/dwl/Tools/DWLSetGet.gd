@@ -71,6 +71,25 @@ static func get_node_texture(node: Node) -> Array:
 			
 			if tp.texture_over:
 				response.append([tp.texture_over, 'over'])
+		TYPES.PROGRESS_BAR:
+			var pb: ProgressBar = node
+			
+			if pb.get_stylebox('fg').get_class() == 'StyleBoxTexture':
+				response.append([
+					(pb.get_stylebox('fg') as StyleBoxTexture).texture,
+					'fg'
+				])
+			
+			if pb.get_stylebox('bg').get_class() == 'StyleBoxTexture':
+				response.append([
+					(pb.get_stylebox('bg') as StyleBoxTexture).texture,
+					'bg'
+				])
+		TYPES.PANEL, TYPES.PANEL_CONTAIER:
+			if node.get_stylebox('panel').get_class() == 'StyleBoxTexture':
+				response.append(
+					(node.get_stylebox('panel') as StyleBoxTexture).texture
+				)
 		TYPES.MESH_INSTANCE:
 			var m: Material = (node as MeshInstance).get_active_material(0)
 			
@@ -140,6 +159,16 @@ static func set_node_texture(node: Node, texture: Texture, style := '') -> void:
 					tp.texture_progress = texture
 				'over':
 					tp.texture_over = texture
+		TYPES.PROGRESS_BAR:
+			var pb: ProgressBar = node
+			
+			match style:
+				'fg':
+					(pb.get_stylebox('fg') as StyleBoxTexture).texture = texture
+				'bg':
+					(pb.get_stylebox('bg') as StyleBoxTexture).texture = texture
+		TYPES.PANEL, TYPES.PANEL_CONTAIER:
+			(node.get_stylebox('panel') as StyleBoxTexture).texture = texture
 		TYPES.MESH_INSTANCE:
 			var m: Material = (node as MeshInstance).get_active_material(0)
 			
