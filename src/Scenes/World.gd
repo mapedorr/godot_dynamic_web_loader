@@ -26,7 +26,7 @@ func _add_cosos() -> void:
 		add_child(s2)
 
 
-func get_custom_textures() -> Array:
+func get_extra_textures() -> Array:
 	var textures := [
 		{
 			prop = 'txt',
@@ -43,7 +43,7 @@ func get_custom_textures() -> Array:
 	return textures
 
 
-func set_custom_texture(prop: String, texture: Texture) -> void:
+func set_extra_texture(prop: String, texture: Texture) -> void:
 	if prop == 'txt':
 		txt = texture
 	elif prop == 'texturitas':

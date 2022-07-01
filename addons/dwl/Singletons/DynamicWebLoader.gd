@@ -64,7 +64,7 @@ func preload_assets(scene_path: String, load_grandchilds := false) -> void:
 		
 		for gc in grandchilds:
 			var node: Node = load(scene_path).instance()
-			_load_assets(node.get_node(gc.path))
+			_load_assets(node.get_node(gc.path), scene_path)
 
 
 # Carga los assets (imágenes y audios) para un nodo y se los asigna a este y a
@@ -78,7 +78,7 @@ func load_node_assets(node: Node, load_grandchilds := false) -> void:
 		else []
 		
 		for gc in grandchilds:
-			_load_assets(node.get_node(gc.path))
+			_load_assets(node.get_node(gc.path), node.filename)
 
 
 func get_asset(path: String) -> Resource:
@@ -138,25 +138,43 @@ func _json_request_completed(
 
 
 # src puede ser un String o un Node
-func _load_assets(src) -> void:
+func _load_assets(src, grandma := '') -> void:
 	var id: String = src if typeof(src) == TYPE_STRING else src.filename
 	
-	_load_counts[id] = {
-		total_files = 0,
-		loaded_files = 0
-	}
+	if not _load_counts.has(id):
+		_load_counts[id] = {
+			total_files = 0,
+			loaded_files = 0
+		}
+	
+	if grandma:
+		_load_counts[id].grandma = grandma
+		
+		if not _load_counts.has(grandma):
+			_load_counts[grandma] = {
+				total_files = 0,
+				loaded_files = 0
+			}
 	
 	for asset in _get_assets_data(id):
-		if asset.has('custom_load'):
+		if asset.has('custom_textures_load') or asset.has('custom_audios_load'):
 			if typeof(src) == TYPE_STRING:
 				# Si se está haciendo una precarga hay que asegurar que también
-				# se cargarán los assets de hacen parte de la carga personalizada
+				# se cargarán los assets que hacen parte de la carga personalizada
 				src = load(src).instance()
 			
-			if src.has_method('load_custom'):
-				var assets_count: int = src.load_custom(asset)
-				_load_counts[id].total_files += assets_count
-				_total_files += assets_count
+			var assets_count := 0
+			
+			if src.has_method('custom_textures_load'):
+				assets_count = src.custom_textures_load(asset)
+			elif src.has_method('custom_audios_load'):
+				assets_count = src.custom_audios_load(asset)
+			
+			_load_counts[id].total_files += assets_count
+			_total_files += assets_count
+			
+			if grandma:
+				_load_counts[grandma].total_files += assets_count
 			
 			continue
 		
@@ -270,6 +288,9 @@ func _request_asset(ext: String, data: Dictionary, target) -> void:
 	
 	_load_counts[id].total_files += 1
 	_total_files += 1
+	
+	if _load_counts[id].has('grandma'):
+		_load_counts[_load_counts[id].grandma].total_files += 1
 
 
 func _asset_downloaded(
@@ -331,7 +352,9 @@ func _asset_downloaded(
 
 
 func _check_load_count(id: String) -> void:
-	if _load_counts[id].loaded_files == _load_counts[id].total_files:
+	var load_counts: Dictionary = _load_counts[id]
+	
+	if load_counts.loaded_files == load_counts.total_files:
 		yield(get_tree(), 'idle_frame')
 		
 		if $HTTPRequestContainers.get_child_count() == 0:
@@ -339,13 +362,19 @@ func _check_load_count(id: String) -> void:
 			_loaded_files = 0
 		
 		emit_signal('load_done', id)
+		
+		if load_counts.has('grandma'):
+			_load_counts[load_counts.grandma].loaded_files +=\
+			load_counts.total_files
+			
+			_check_load_count(load_counts.grandma)
 
 
 func _assign_asset(ext: String, res, data: Dictionary, mama: Node):
 	if ext == 'png' or ext == 'jpg':
 		if data.has('prop'):
-			if mama.has_method('set_custom_texture'):
-				mama.set_custom_texture(data.prop, res)
+			if mama.has_method('set_extra_texture'):
+				mama.set_extra_texture(data.prop, res)
 			return
 		
 		if not _customs.set_node_texture(\

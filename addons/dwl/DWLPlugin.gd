@@ -103,8 +103,8 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 		# ---- Obtener las imágenes del nodo y sus hijos -----------------------
 		_assets_paths.images[key] = []
 
-		if _mama.has_method('get_custom_textures'):
-			var props: Array = _mama.get_custom_textures()
+		if _mama.has_method('get_extra_textures'):
+			var props: Array = _mama.get_extra_textures()
 			var textures := []
 			
 			for p in props:
@@ -115,6 +115,8 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 				_report[key].images.append(get_texture_web_path(p.texture))
 			
 			_assets_paths.images[key].append_array(textures)
+		elif _mama.has_method('custom_textures_load'):
+			_assets_paths.audios[key].append_array([{custom_textures_load = true}])
 		
 		_get_node_images(_mama)
 		
@@ -126,21 +128,20 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 		# ---- Obtener los audios del nodo y sus hijos -------------------------
 		_assets_paths.audios[key] = []
 		
-		if _mama.has_method('get_custom_audios'):
+		if _mama.has_method('get_extra_audios'):
 			var props: Array = _mama.get_custom_audios()
 			var audios := []
 			
 			for p in props:
-				if p.has('custom_load'):
-					audios.append(p)
-				else:
-					audios.append({
-						prop = p.prop,
-						path = get_texture_web_path(p.texture)
-					})
-					_report[key].audios.append(get_texture_web_path(p.texture))
+				audios.append({
+					prop = p.prop,
+					path = get_texture_web_path(p.texture)
+				})
+				_report[key].audios.append(get_texture_web_path(p.texture))
 			
 			_assets_paths.audios[key].append_array(audios)
+		elif _mama.has_method('custom_audios_load'):
+			_assets_paths.audios[key].append_array([{custom_audios_load = true}])
 		
 		_get_node_audios(_mama)
 		
