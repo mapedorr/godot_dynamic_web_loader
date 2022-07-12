@@ -30,5 +30,4 @@ func _load_world_assets() -> void:
 
 
 func _goto_world(_scene_path: String) -> void:
-	prints('Estamos listos para ir al mundo real!!!')
 	DWL.disconnect('load_done', self, '_goto_world')

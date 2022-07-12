@@ -111,7 +111,8 @@ func _read_dir(dir: EditorFileSystemDirectory) -> void:
 			for p in props:
 				textures.append({
 					prop = p.prop,
-					path = get_texture_web_path(p.texture)
+					path = get_texture_web_path(p.texture),
+					flags = p.texture.flags
 				})
 				_report[key].images.append(get_texture_web_path(p.texture))
 			

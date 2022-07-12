@@ -16,6 +16,7 @@ const TYPES := {
 	PANEL = 'Panel',
 	# 2D
 	SPRITE = 'Sprite',
+	LIGHT_2D = 'Light2D',
 	# 3D
 	MESH_INSTANCE = 'MeshInstance',
 	# Audio
@@ -29,8 +30,7 @@ static func get_node_texture(node: Node) -> Array:
 	var response := []
 	
 	match node.get_class():
-		TYPES.TEXTURE_RECT, TYPES.SPRITE, TYPES.NINE_PATCH_RECT:
-			prints(node.name, node.texture.flags, node.texture.get_data().get_format())
+		TYPES.TEXTURE_RECT, TYPES.SPRITE, TYPES.NINE_PATCH_RECT, TYPES.LIGHT_2D:
 			response.append(node.texture)
 		TYPES.CHECKBOX:
 			var cb: CheckBox = node
@@ -124,7 +124,7 @@ static func set_node_texture(node: Node, texture: Texture, data := {}) -> void:
 	var style: String = data.style if data.has('style') else ''
 	
 	match node.get_class():
-		TYPES.TEXTURE_RECT, TYPES.SPRITE, TYPES.NINE_PATCH_RECT:
+		TYPES.TEXTURE_RECT, TYPES.SPRITE, TYPES.NINE_PATCH_RECT, TYPES.LIGHT_2D:
 			node.texture = texture
 		TYPES.CHECKBOX:
 			(node as CheckBox).add_icon_override(style, texture)
