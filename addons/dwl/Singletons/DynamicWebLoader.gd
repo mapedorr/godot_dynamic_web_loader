@@ -330,7 +330,7 @@ func _asset_downloaded(
 			prints('[DWL] No se puo cargar la imagen.', error)
 
 		res = ImageTexture.new()
-		res.create_from_image(image)
+		res.create_from_image(image, data.flags)
 	else:
 		# Se cargó un archivo de audio del servidor
 		if ext == 'mp3':
@@ -377,21 +377,18 @@ func _assign_asset(ext: String, res, data: Dictionary, mama: Node):
 				mama.set_extra_texture(data.prop, res)
 			return
 		
-		if not _customs.set_node_texture(\
-		mama.get_node(data.node), res, data.style if data.has('style') else ''):
-			SetGet.set_node_texture(
-				mama.get_node(data.node),
-				res,
-				data.style if data.has('style') else ''
-			)
+		if not _customs.set_node_texture(mama.get_node(data.node), res, data):
+			SetGet.set_node_texture(mama.get_node(data.node), res, data)
 		
 		if _waiting_for_asset.has(data.path):
 			for dic in _waiting_for_asset[data.path]:
-				SetGet.set_node_texture(
-					dic.mama.get_node(dic.data.node),
-					res,
-					dic.data.style if dic.data.has('style') else ''
-				)
+				if not _customs.set_node_texture(\
+				dic.mama.get_node(dic.data.node), res, dic.data):
+					SetGet.set_node_texture(
+						dic.mama.get_node(dic.data.node),
+						res,
+						dic.data
+					)
 			_waiting_for_asset.erase(data.path)
 		
 	else:

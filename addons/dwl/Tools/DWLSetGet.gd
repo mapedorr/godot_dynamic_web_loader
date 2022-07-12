@@ -30,6 +30,7 @@ static func get_node_texture(node: Node) -> Array:
 	
 	match node.get_class():
 		TYPES.TEXTURE_RECT, TYPES.SPRITE, TYPES.NINE_PATCH_RECT:
+			prints(node.name, node.texture.flags, node.texture.get_data().get_format())
 			response.append(node.texture)
 		TYPES.CHECKBOX:
 			var cb: CheckBox = node
@@ -39,21 +40,20 @@ static func get_node_texture(node: Node) -> Array:
 			var b: Button = node
 			response.append([b.icon, 'icon'])
 			
-			if b.get_stylebox('normal') is StyleBoxTexture:
-				response.append([
-					(b.get_stylebox('normal') as StyleBoxTexture).texture,
-					'stylebox_normal'
-				])
-			
-			if b.get_stylebox('hover') is StyleBoxTexture:
-				response.append([
-					(b.get_stylebox('hover') as StyleBoxTexture).texture,
-					'stylebox_hover'
-				])
+			for state in ['hover', 'pressed', 'focus', 'disabled', 'normal']:
+				if b.get_stylebox(state) is StyleBoxTexture:
+					response.append([
+						(b.get_stylebox(state) as StyleBoxTexture).texture,
+						'stylebox_' + state
+					])
 		TYPES.TEXTURE_BUTTON:
 			var tb: TextureButton = node
 			response.append([tb.texture_normal, 'texture_normal'])
 			response.append([tb.texture_pressed, 'texture_pressed'])
+			response.append([tb.texture_hover, 'texture_hover'])
+			response.append([tb.texture_disabled, 'texture_disabled'])
+			response.append([tb.texture_focused, 'texture_focused'])
+			response.append([tb.texture_click_mask, 'texture_click_mask'])
 		TYPES.LABEL:
 			var l: Label = node
 			if l.get_stylebox('normal').get_class() == 'StyleBoxTexture':
@@ -120,7 +120,9 @@ static func get_node_stream(node: Node) -> Array:
 	return response
 
 
-static func set_node_texture(node: Node, texture: Texture, style := '') -> void:
+static func set_node_texture(node: Node, texture: Texture, data := {}) -> void:
+	var style: String = data.style if data.has('style') else ''
+	
 	match node.get_class():
 		TYPES.TEXTURE_RECT, TYPES.SPRITE, TYPES.NINE_PATCH_RECT:
 			node.texture = texture

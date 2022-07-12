@@ -38,7 +38,8 @@ func _enter_tree() -> void:
 
 
 func _exit_tree() -> void:
-	pass
+	remove_control_from_bottom_panel(main_dock)
+	main_dock.queue_free()
 
 
 func disable_plugin() -> void:
@@ -201,7 +202,8 @@ func _add_texture(node_path: String, texture: Texture, style := '') -> void:
 	var new_entry := {
 		node = node_path,
 		mama = _mama.name,
-		path = get_texture_web_path(texture)
+		path = get_texture_web_path(texture),
+		flags = texture.flags
 	}
 	
 	if style:

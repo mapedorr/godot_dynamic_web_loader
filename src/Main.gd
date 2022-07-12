@@ -19,7 +19,8 @@ func _load_world_scene() -> void:
 	
 	$MapBgSfx.stop()
 	$MapMusic.stop()
-	$Scenes.add_child(world_scene.instance())
+#	$Scenes.add_child(world_scene.instance())
+	get_tree().change_scene_to(world_scene)
 
 
 func _load_world_assets() -> void:

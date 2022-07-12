@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/main_menu_btn_play.png-77f481ef74281532a3339a7ae9ee59cf.stex"
+path="res://.import/goddiu.png-4ba9c5f6f40d75d241fdaddf9f520a5c.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/images/player_interface/main_menu_btn_play.png"
-dest_files=[ "res://.import/main_menu_btn_play.png-77f481ef74281532a3339a7ae9ee59cf.stex" ]
+source_file="res://src/goddiu.png"
+dest_files=[ "res://.import/goddiu.png-4ba9c5f6f40d75d241fdaddf9f520a5c.stex" ]
 
 [params]
 
@@ -20,7 +20,7 @@ compress/hdr_mode=0
 compress/bptc_ldr=0
 compress/normal_map=0
 flags/repeat=0
-flags/filter=true
+flags/filter=false
 flags/mipmaps=false
 flags/anisotropic=false
 flags/srgb=2

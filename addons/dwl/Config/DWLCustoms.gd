@@ -29,7 +29,7 @@ static func get_node_stream(node: Node) -> Array:
 	return []
 
 
-static func set_node_texture(node: Node, texture: Texture, style := '') -> bool:
+static func set_node_texture(node: Node, texture: Texture, data := {}) -> bool:
 	return false
 
 

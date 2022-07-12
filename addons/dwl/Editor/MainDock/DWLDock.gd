@@ -83,7 +83,11 @@ func _copy_files() -> void:
 	efs.get_filesystem_path('res://')
 	
 	# Se recorren las carpetas en busca de archivos de imagen y de audio
+	_generation_result.text = 'Copia de archivos iniciada'
+	yield(get_tree().create_timer(0.5), 'timeout')
+	
 	_read_path(dir)
+	_generation_result.text = 'Copia de archivos terminada'
 
 
 func _open_folder() -> void:
