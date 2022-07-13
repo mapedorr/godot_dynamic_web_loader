@@ -13,6 +13,7 @@ var _directory := Directory.new()
 var _assets_paths := { audios = {}, images = {}, grandchilds = {} }
 var _mama: Node = null
 var _report := {}
+var _export_plugin: EditorExportPlugin = null
 
 onready var _customs := DWLResources.get_customs()
 
@@ -35,11 +36,16 @@ func _enter_tree() -> void:
 	
 #	add_control_to_dock(DOCK_SLOT_RIGHT_BR, main_dock)
 	add_control_to_bottom_panel(main_dock, 'Dynamic Web Loader')
+	
+	_export_plugin = load('res://addons/dwl/Tools/DWLExportPlugin.gd').new()
+	add_export_plugin(_export_plugin)
+	_export_plugin.efs = _editor_file_system
 
 
 func _exit_tree() -> void:
 	remove_control_from_bottom_panel(main_dock)
 	main_dock.queue_free()
+	remove_export_plugin(_export_plugin)
 
 
 func disable_plugin() -> void:
